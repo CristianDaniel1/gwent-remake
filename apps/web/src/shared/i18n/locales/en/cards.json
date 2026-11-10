@@ -1,0 +1,400 @@
+{
+  "card": {
+    "0": "Mysterious Elf",
+    "1": "Decoy",
+    "2": "Biting Frost",
+    "3": "Cirilla Fiona Elen Riannon",
+    "4": "Clear Weather",
+    "5": "Commander's Horn",
+    "6": "Dandelion",
+    "7": "Emiel Regis Rohellec Terzieff",
+    "8": "Geralt of Rivia",
+    "9": "Impenetrable Fog",
+    "10": "Scorch",
+    "11": "Torrential Rain",
+    "12": "Triss Merigold",
+    "13": "Vesemir",
+    "14": "Villentretenmerth",
+    "15": "Yennefer of Vengerberg",
+    "16": "Zoltan Chivay",
+    "17": "Olgierd von Everec",
+    "18": "Gaunter O'Dimm",
+    "19": "Gaunter O'Dimm - Darkness",
+    "20": "Cow",
+    "21": "Bovine Defense Force",
+    "22": "Foltest - King of Temeria",
+    "23": "Foltest - Lord Commander of the North",
+    "24": "Foltest - The Siegemaster",
+    "25": "Foltest - The Steel-Forged",
+    "26": "Foltest - Son of Medell",
+    "27": "Ballista",
+    "28": "Blue Stripes Commando",
+    "29": "Catapult",
+    "30": "Crinfrid Reavers Dragon Hunter",
+    "31": "Dethmold",
+    "32": "Dun Banner Medic",
+    "33": "Esterad Thyssen",
+    "34": "John Natalis",
+    "35": "Kaedweni Siege Expert",
+    "36": "Kaedweni Siege Expert",
+    "37": "Kaedweni Siege Expert",
+    "38": "Keira Metz",
+    "39": "Philippa Eilhart",
+    "40": "Poor Fucking Infantry",
+    "41": "Prince Stennis",
+    "42": "Redanian Foot Soldier",
+    "43": "Redanian Foot Soldier",
+    "44": "Sheldon Skaggs",
+    "45": "Siege Tower",
+    "46": "Siegfried of Denesle",
+    "47": "Sigismund Dijkstra",
+    "48": "Síle de Tansarville",
+    "49": "Thaler",
+    "50": "Sabrina Glevissig",
+    "51": "Vernon Roche",
+    "52": "Ves",
+    "53": "Yarpen Zigrin",
+    "54": "Trebuchet",
+    "55": "Trebuchet",
+    "56": "Emhyr var Emreis - His Imperial Majesty",
+    "57": "Emhyr var Emreis - Emperor of Nilfgaard",
+    "58": "Emhyr var Emreis - the White Flame",
+    "59": "Emhyr var Emreis - The Relentless",
+    "60": "Emhyr var Emreis - Invader of the North",
+    "61": "Albrich",
+    "62": "Assire var Anahid",
+    "63": "Black Infantry Archer",
+    "64": "Black Infantry Archer",
+    "65": "Cahir Mawr Dyffryn aep Ceallach",
+    "66": "Cynthia",
+    "67": "Etolian Auxiliary Archers",
+    "68": "Etolian Auxiliary Archers",
+    "69": "Fringilla Vigo",
+    "70": "Heavy Zerrikanian Fire Scorpion",
+    "71": "Impera Brigade Guard",
+    "72": "Letho of Gulet",
+    "73": "Menno Coehoorn",
+    "74": "Morteisen",
+    "75": "Morvran Voorhis",
+    "76": "Nausicaa Cavalry Rider",
+    "77": "Puttkammer",
+    "78": "Rainfarn",
+    "79": "Renuald aep Matsen",
+    "80": "Rotten Mangonel",
+    "81": "Shilard Fitz-Oesterlen",
+    "82": "Siege Engineer",
+    "83": "Siege Technician",
+    "84": "Stefan Skellen",
+    "85": "Sweers",
+    "86": "Tibor Eggebracht",
+    "87": "Vanhemar",
+    "88": "Vattier de Rideaux",
+    "89": "Vreemde",
+    "90": "Young Emissary",
+    "91": "Young Emissary",
+    "92": "Zerrikanian Fire Scorpion",
+    "93": "Eredin - Commander of the Red Riders",
+    "94": "Eredin - Bringer of Death",
+    "95": "Eredin - Destroyer of Worlds",
+    "96": "Eredin - King of the Wild Hunt",
+    "97": "Eredin Bréacc Glas - The Treacherous",
+    "98": "Arachas",
+    "99": "Arachas",
+    "100": "Arachas",
+    "101": "Arachas- Behemoth",
+    "102": "Botchling",
+    "103": "Celaeno Harpy",
+    "104": "Cockatrice",
+    "105": "Crone - Brewess",
+    "106": "Crone - Weavess",
+    "107": "Crone - Whispess",
+    "108": "Draug",
+    "109": "Earth Elemental",
+    "110": "Endrega",
+    "111": "Fiend",
+    "112": "Fire Elemental",
+    "113": "Foglet",
+    "114": "Forktail",
+    "115": "Frightener",
+    "116": "Gargoyle",
+    "117": "Ghoul",
+    "118": "Ghoul",
+    "119": "Ghoul",
+    "120": "Grave Hag",
+    "121": "Griffin",
+    "122": "Harpy",
+    "123": "Ice Giant",
+    "124": "Imlerith",
+    "125": "Kayran",
+    "126": "Leshen",
+    "127": "Nekker",
+    "128": "Nekker",
+    "129": "Nekker",
+    "130": "Plague Maiden",
+    "131": "Vampire - Bruxa",
+    "132": "Vampire - Ekimmara",
+    "133": "Vampire - Fleder",
+    "134": "Vampire - Garkain",
+    "135": "Vampire - Katakan",
+    "136": "Werewolf",
+    "137": "Wyvern",
+    "138": "Toad",
+    "139": "Francesca Findabair - Queen of Dol Blathanna",
+    "140": "Francesca Findabair - the Beautiful",
+    "141": "Francesca Findabair - Daisy of the Valley",
+    "142": "Francesca Findabair - Pureblood Elf",
+    "143": "Francesca Findabair - Hope of the Aen Seidhe",
+    "144": "Ciaran aep Easnillien",
+    "145": "Barclay Els",
+    "146": "Dennis Cranmer",
+    "147": "Dol Blathanna Archer",
+    "148": "Dol Blathanna Scout",
+    "149": "Dol Blathanna Scout",
+    "150": "Dol Blathanna Scout",
+    "151": "Dwarven Skirmisher",
+    "152": "Dwarven Skirmisher",
+    "153": "Dwarven Skirmisher",
+    "154": "Eithné",
+    "155": "Elven Skirmisher",
+    "156": "Elven Skirmisher",
+    "157": "Elven Skirmisher",
+    "158": "Filavandrel aen Fidhail",
+    "159": "Havekar Healer",
+    "160": "Havekar Healer",
+    "161": "Havekar Healer",
+    "162": "Havekar Smuggler",
+    "163": "Havekar Smuggler",
+    "164": "Havekar Smuggler",
+    "165": "Ida Emean aep Sivney",
+    "166": "Iorveth",
+    "167": "Isengrim Faoiltiarna",
+    "168": "Mahakaman Defender",
+    "169": "Mahakaman Defender",
+    "170": "Mahakaman Defender",
+    "171": "Mahakaman Defender",
+    "172": "Mahakaman Defender",
+    "173": "Milva",
+    "174": "Riordain",
+    "175": "Saesenthessis",
+    "176": "Toruviel",
+    "177": "Vrihedd Brigade Recruit",
+    "178": "Vrihedd Brigade Veteran",
+    "179": "Vrihedd Brigade Veteran",
+    "180": "Yaevinn",
+    "181": "Berserker",
+    "182": "Birna Bran",
+    "183": "Blueboy Lugos",
+    "184": "Cerys",
+    "185": "Clan Brokva Archer",
+    "186": "Clan Dimun Pirate",
+    "187": "Cerys - Clan Drummond Shield Maiden",
+    "188": "Cerys - Clan Drummond Shield Maiden",
+    "189": "Cerys - Clan Drummond Shield Maiden",
+    "190": "Clan Heymaey Skald",
+    "191": "Clan Tordarroch Armorsmith",
+    "192": "Clan an Craite Warrior",
+    "193": "Donar an Hindar",
+    "194": "Draig Bon-Dhu",
+    "195": "Ermion",
+    "196": "Hemdall",
+    "197": "Hjalmar",
+    "198": "Holger Blackhand",
+    "199": "Kambi",
+    "200": "Light Longship",
+    "201": "Madman Lugos",
+    "202": "Mardroeme",
+    "203": "Olaf",
+    "204": "Skellige Storm",
+    "205": "Svanrige",
+    "206": "Transformed Vildkaarl",
+    "207": "Transformed Young Vildkaarl",
+    "208": "Udalryk",
+    "209": "War Longship",
+    "210": "Young Berserker",
+    "211": "Crach an Craite",
+    "212": "King Bran",
+    "213": "Schirru",
+    "214": "Roach",
+    "215": "Ballista"
+  },
+  "ability": {
+    "clear": {
+      "name": "Clear Weather",
+      "description": "Removes all Weather Cards (Biting Frost, Impenetrable Fog and Torrential Rain) effects."
+    },
+    "frost": {
+      "name": "Biting Frost",
+      "description": "Sets the strength of all Close Combat cards to 1 for both players."
+    },
+    "fog": {
+      "name": "Impenetrable Fog",
+      "description": "Sets the strength of all Ranged Combat cards to 1 for both players."
+    },
+    "rain": {
+      "name": "Torrential Rain",
+      "description": "Sets the strength of all Siege Combat cards to 1 for both players."
+    },
+    "storm": {
+      "name": "Skellige Storm",
+      "description": "Reduces the Strength of all Range and Siege Units to 1."
+    },
+    "hero": {
+      "name": "hero",
+      "description": "Not affected by any Special Cards or abilities."
+    },
+    "decoy": {
+      "name": "Decoy",
+      "description": "Swap with a card on the battlefield to return it to your hand."
+    },
+    "horn": {
+      "name": "Commander's Horn",
+      "description": "Doubles the strength of all unit cards in that row. Limited to 1 per row."
+    },
+    "mardroeme": {
+      "name": "Mardroeme",
+      "description": "Triggers transformation of all Berserker cards on the same row."
+    },
+    "berserker": {
+      "name": "Berserker",
+      "description": "Transforms into a bear when a Mardroeme card is on its row."
+    },
+    "vildkarrl": {},
+    "scorch": {
+      "name": "Scorch",
+      "description": "Discard after playing. Kills the strongest card(s) on the battlefield."
+    },
+    "scorch_c": {
+      "name": "Scorch - Close Combat",
+      "description": "Destroy your enemy's strongest Close Combat unit(s) if the combined strength of all his or her Close Combat units is 10 or more."
+    },
+    "scorch_r": {
+      "name": "Scorch - Ranged",
+      "description": "Destroy your enemy's strongest Ranged Combat unit(s) if the combined strength of all his or her Ranged Combat units is 10 or more."
+    },
+    "scorch_s": {
+      "name": "Scorch - Siege",
+      "description": "Destroys your enemy's strongest Siege Combat unit(s) if the combined strength of all his or her Siege Combat units is 10 or more."
+    },
+    "agile": {
+      "name": "agile",
+      "description": "Can be placed in either the Close Combat or the Ranged Combat row. Cannot be moved once placed."
+    },
+    "muster": {
+      "name": "muster",
+      "description": "Find any cards with the same name in your deck and play them instantly."
+    },
+    "spy": {
+      "name": "spy",
+      "description": "Place on your opponent's battlefield (counts towards your opponent's total) and draw 2 cards from your deck."
+    },
+    "medic": {
+      "name": "medic",
+      "description": "Choose one card from your discard pile and play it instantly (no Heroes or Special Cards)."
+    },
+    "morale": {
+      "name": "Morale",
+      "description": "Adds +1 to all units in the row (excluding itself)."
+    },
+    "bond": {
+      "name": "Tight Bond",
+      "description": "Place next to a card with the same name to double the strength of both cards."
+    },
+    "avenger": {
+      "name": "Avenger",
+      "description": "When this card is removed from the battlefield, it summons a powerful new Unit Card to take its place."
+    },
+    "avenger_kambi": {
+      "name": "Avenger",
+      "description": "When this card is removed from the battlefield, it summons a powerful new Unit Card to take its place."
+    },
+    "foltest_king": {
+      "description": "Pick an Impenetrable Fog card from your deck and play it instantly."
+    },
+    "foltest_lord": {
+      "description": "Clear any weather effects (resulting from Biting Frost, Torrential Rain or Impenetrable Fog cards) in play."
+    },
+    "foltest_siegemaster": {
+      "description": "Doubles the strength of all your Siege units (unless a Commander's Horn is also present on that row)."
+    },
+    "foltest_steelforged": {
+      "description": "Destroy your enemy's strongest Siege unit(s) if the combined strength of all his or her Siege units is 10 or more."
+    },
+    "foltest_son": {
+      "description": "Destroy your enemy's strongest Ranged Combat unit(s) if the combined strength of all his or her Ranged Combat units is 10 or more."
+    },
+    "emhyr_imperial": {
+      "description": "Pick a Torrential Rain card from your deck and play it instantly."
+    },
+    "emhyr_emperor": {
+      "description": "Look at 3 random cards from your opponent's hand."
+    },
+    "emhyr_whiteflame": {
+      "description": "Cancel your opponent's Leader Ability."
+    },
+    "emhyr_relentless": {
+      "description": "Draw a card from your opponent's discard pile."
+    },
+    "emhyr_invader": {
+      "description": "Abilities that restore a unit to the battlefield restore a randomly-chosen unit. Affects both players."
+    },
+    "eredin_commander": {
+      "description": "Double the strength of all your Close Combat units (unless a Commander's horn is \talso present on that row)."
+    },
+    "eredin_bringer_of_death": {
+      "name": "Eredin : Bringer of Death",
+      "description": "Restore a card from your discard pile to your hand."
+    },
+    "eredin_destroyer": {
+      "description": "Discard 2 card and draw 1 card of your choice from your deck."
+    },
+    "eredin_king": {
+      "description": "Pick any weather card from your deck and play it instantly."
+    },
+    "eredin_treacherous": {
+      "description": "Doubles the strength of all spy cards (affects both players)."
+    },
+    "francesca_queen": {
+      "description": "Destroy your enemy's strongest Close Combat unit(s) if the combined strength of all his or her Close Combat units is 10 or more."
+    },
+    "francesca_beautiful": {
+      "description": "Doubles the strength of all your Ranged Combat units (unless a Commander's Horn is also present on that row)."
+    },
+    "francesca_daisy": {
+      "description": "Draw an extra card at the beginning of the battle."
+    },
+    "francesca_pureblood": {
+      "description": "Pick a Biting Frost card from your deck and play it instantly."
+    },
+    "francesca_hope": {
+      "description": "Move agile units to whichever valid row maximizes their strength (don't move units already in optimal row)."
+    },
+    "crach_an_craite": {
+      "description": "Shuffle all cards from each player's graveyard back into their decks."
+    },
+    "king_bran": {
+      "description": "Units only lose half their Strength in bad weather conditions."
+    }
+  },
+  "faction": {
+    "realms": {
+      "name": "Northern Realms",
+      "description": "Draw a card from your deck whenever you win a round."
+    },
+    "nilfgaard": {
+      "name": "Nilfgaardian Empire",
+      "description": "Wins any round that ends in a draw."
+    },
+    "monsters": {
+      "name": "Monsters",
+      "description": "Keeps a random Unit Card out after each round."
+    },
+    "scoiatael": {
+      "name": "Scoia'tael",
+      "description": "Decides who takes first turn."
+    },
+    "skellige": {
+      "name": "Skellige",
+      "description": "2 random cards from the graveyard are placed on the battlefield at the start of the third round."
+    }
+  }
+}

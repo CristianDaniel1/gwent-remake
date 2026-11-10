@@ -1,0 +1,4 @@
+{
+  "extends": "@gwent/config/tsconfig.base.json",
+  "include": ["src"]
+}

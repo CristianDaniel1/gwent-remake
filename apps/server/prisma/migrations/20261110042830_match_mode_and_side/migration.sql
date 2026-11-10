@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Match" ADD COLUMN     "mode" VARCHAR(10) NOT NULL DEFAULT 'bot',
+ADD COLUMN     "opponentName" VARCHAR(40),
+ADD COLUMN     "side" VARCHAR(2) NOT NULL DEFAULT 'p1';

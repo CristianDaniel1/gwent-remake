@@ -1,0 +1,400 @@
+{
+  "card": {
+    "0": "Elfo misterioso",
+    "1": "Isca",
+    "2": "Frio Congelante",
+    "3": "Cirilla",
+    "4": "Tempo Claro",
+    "5": "Corneta do Comandante",
+    "6": "Dandelion",
+    "7": "Emiel Regis Rohellec Terzieff",
+    "8": "Geralt de Rívia",
+    "9": "Névoa Impenetrável",
+    "10": "Queimar",
+    "11": "Chuva Torrencial",
+    "12": "Triss Merigold",
+    "13": "Vesemir",
+    "14": "Villentretenmerth",
+    "15": "Yennefer de Vengerberg",
+    "16": "Zoltan Chivay",
+    "17": "Olgierd von Everec",
+    "18": "Gaunter O'Dim",
+    "19": "Gaunter O'Dim: Escuridão",
+    "20": "Vaca",
+    "21": "Força de defesa bovina",
+    "22": "Foltest - Rei da Teméria",
+    "23": "Foltest - Comandante do Norte",
+    "24": "Foltest - Mestre do Cerco",
+    "25": "Foltest - Nascido do Aço",
+    "26": "Foltest - Filho de Medell",
+    "27": "Balista",
+    "28": "Comando dos Listras Azuis",
+    "29": "Catapulta",
+    "30": "Caçador de Dragões Saqueadores de Crinfrid",
+    "31": "Dethmold",
+    "32": "Médico da Bandeira de Dun",
+    "33": "Esterad Thyssen",
+    "34": "John Natalis",
+    "35": "Especialista em Cerco Kaedweni",
+    "36": "Especialista em Cerco Kaedweni",
+    "37": "Especialista em Cerco Kaedweni",
+    "38": "Keira Metz",
+    "39": "Philippa Eilhart",
+    "40": "Pobre Infantaria do Caralho",
+    "41": "Príncipe Stennis",
+    "42": "Soldado Raso Redaniano",
+    "43": "Soldado Raso Redaniano",
+    "44": "Sheldon Skaggs",
+    "45": "Torre de Cerco",
+    "46": "Siegfried de Denesle",
+    "47": "Sigismund Dijkstra",
+    "48": "Síle de Tansarville",
+    "49": "Thaler",
+    "50": "Sabrina Glevissig",
+    "51": "Vernon Roche",
+    "52": "Ves",
+    "53": "Yarpen Zigrin",
+    "54": "Trabuco",
+    "55": "Trabuco",
+    "56": "Emhyr var Emreis - Vossa Majestade Imperial",
+    "57": "Emhyr var Emreis - Imperador de Nilfgaard",
+    "58": "Emhyr var Emreis - a Chama Branca",
+    "59": "Emhyr var Emreis - o Implacável",
+    "60": "Emhyr var Emreis - Invasor do Norte",
+    "61": "Albrich",
+    "62": "Assire var Anahid",
+    "63": "Arqueiro da Infantaria Negra",
+    "64": "Arqueiro da Infantaria Negra",
+    "65": "Cahir Mawr Dyffryn aep Ceallach",
+    "66": "Cynthia",
+    "67": "Arqueiro de Reforço",
+    "68": "Arqueiro de Reforço",
+    "69": "Fringilla Vigo",
+    "70": "Escorpião de Fogo Pesado da Zerrikânia",
+    "71": "Brigada Imperial",
+    "72": "Letho de Gulet",
+    "73": "Menno Coehoorn",
+    "74": "Morteisen",
+    "75": "Morvran Voorhis",
+    "76": "Brigada de Cavalaria Nausicaa",
+    "77": "Puttkammer",
+    "78": "Tanaceto",
+    "79": "Renuald aep Matsen",
+    "80": "Manganela Podre",
+    "81": "Shilard Fitz-Oesterlen",
+    "82": "Engenheiro de Cerco",
+    "83": "Reforço de Cerco",
+    "84": "Stefan Skellen",
+    "85": "Sweers",
+    "86": "Tibor Eggebracht",
+    "87": "Vanhemar",
+    "88": "Vattier de Rideaux",
+    "89": "Vreemde",
+    "90": "Jovem Emissário",
+    "91": "Jovem Emissário",
+    "92": "Escorpião de Fogo da Zerrikânia",
+    "93": "Eredin - Comandante dos Cavaleiros Vermelhos",
+    "94": "Eredin - Arauto da Morte",
+    "95": "Eredin - Destruidor de Mundos",
+    "96": "Eredin - Rei da Caçada Selvagem",
+    "97": "Eredin Bréacc Glas - O Traiçoeiro",
+    "98": "Arachas",
+    "99": "Arachas",
+    "100": "Arachas",
+    "101": "Aracna Gigante",
+    "102": "Fetulho",
+    "103": "Harpia celaeno",
+    "104": "Cocatriz",
+    "105": "Moira: Alquimista",
+    "106": "Moira: Tecelã",
+    "107": "Moira: Sibilante",
+    "108": "Draug",
+    "109": "Elemental da Terra",
+    "110": "Endriúga",
+    "111": "Demônio",
+    "112": "Elemental do fogo",
+    "113": "Nevoloso",
+    "114": "Tordo",
+    "115": "Espanto",
+    "116": "Gárgula",
+    "117": "Carniçal",
+    "118": "Carniçal",
+    "119": "Carniçal",
+    "120": "Bruxa sepulcral",
+    "121": "Grifo",
+    "122": "Harpia",
+    "123": "Gigante de Gelo",
+    "124": "Imlerith",
+    "125": "Kayran",
+    "126": "Liche",
+    "127": "Nekker",
+    "128": "Nekker",
+    "129": "Nekker",
+    "130": "Dama da peste",
+    "131": "Vampiro: Lâmia",
+    "132": "Vampiro: Ekimmu",
+    "133": "Vampiro: Fleder",
+    "134": "Vampiro: Garkain",
+    "135": "Vampiro: Katakan",
+    "136": "Lobisomem",
+    "137": "Wyvern",
+    "138": "Sapo",
+    "139": "Francesca Findabair - Rainha de Dol Blathanna",
+    "140": "Francesca Findabair - a Bela",
+    "141": "Francesca Findabair - Margarida do Vale",
+    "142": "Francesca Findabair - Elfa de Linhagem Pura",
+    "143": "Francesca Findabair - Esperança dos Aen Seidhe",
+    "144": "Ciaran aep Easnillien",
+    "145": "Barclay Els",
+    "146": "Dennis Cranmer",
+    "147": "Arqueiro de Dol Blathanna",
+    "148": "Batedor de Dol Blathanna",
+    "149": "Batedor de Dol Blathanna",
+    "150": "Batedor de Dol Blathanna",
+    "151": "Anão Escaramuçador",
+    "152": "Anão Escaramuçador",
+    "153": "Anão Escaramuçador",
+    "154": "Eithné",
+    "155": "Elfo Escaramuçador",
+    "156": "Elfo Escaramuçador",
+    "157": "Elfo Escaramuçador",
+    "158": "Filavandrel aén Fidháil",
+    "159": "Médico Havekar",
+    "160": "Médico Havekar",
+    "161": "Médico Havekar",
+    "162": "Reforço Havekar",
+    "163": "Reforço Havekar",
+    "164": "Reforço Havekar",
+    "165": "Ida Emean aep Sivney",
+    "166": "Iorveth",
+    "167": "Isengrim Faoiltiarna",
+    "168": "Defensores de Mahakam",
+    "169": "Defensores de Mahakam",
+    "170": "Defensores de Mahakam",
+    "171": "Defensores de Mahakam",
+    "172": "Defensores de Mahakam",
+    "173": "Milva",
+    "174": "Riordain",
+    "175": "Saesenthessis",
+    "176": "Toruviel",
+    "177": "Cadete de Vrihedd",
+    "178": "Brigada Vrihedd",
+    "179": "Brigada Vrihedd",
+    "180": "Yaevinn",
+    "181": "Berserker",
+    "182": "Birna Bran",
+    "183": "Lugos Todo Roxo",
+    "184": "Cerys",
+    "185": "Arqueiro do clã Brokvar",
+    "186": "Pirata do clã Dimun",
+    "187": "Donzela protetora do clã Drummond",
+    "188": "Donzela protetora do clã Drummond",
+    "189": "Donzela protetora do clã Drummond",
+    "190": "Bardo do clã Heymaey",
+    "191": "Armeiro do clã Tordarroch",
+    "192": "Guerreiro do clã an Craite",
+    "193": "Donar an Hindar",
+    "194": "Draig Bon-Dhu",
+    "195": "Arminho",
+    "196": "Hemdall",
+    "197": "Hjalmar",
+    "198": "Holger Mão-Negra",
+    "199": "Kambi",
+    "200": "Dracar leve",
+    "201": "Lugos Maluco",
+    "202": "Mardroeme",
+    "203": "Olaf",
+    "204": "Tempestade de Skellige",
+    "205": "Svanrige",
+    "206": "Vildkaarl transformado",
+    "207": "Jovem Vildkaarl transformado",
+    "208": "Udalryk",
+    "209": "Dracar bélico",
+    "210": "Berserker jovem",
+    "211": "Crach an Craite",
+    "212": "Rei Bran",
+    "213": "Schirrú",
+    "214": "Carpeado",
+    "215": "Balista"
+  },
+  "ability": {
+    "clear": {
+      "name": "Tempo Limpo",
+      "description": "Remove os efeitos de todas as Cartas de Clima (Gelo Cortante, Névoa Impenetrável e Chuva Torrencial)."
+    },
+    "frost": {
+      "name": "Gelo Cortante",
+      "description": "Reduz a força de todas as cartas de Combate Corpo a Corpo para 1 para ambos os jogadores."
+    },
+    "fog": {
+      "name": "Névoa Impenetrável",
+      "description": "Reduz a força de todas as cartas de Combate à Distância para 1 para ambos os jogadores."
+    },
+    "rain": {
+      "name": "Chuva Torrencial",
+      "description": "Reduz a força de todas as cartas de Combate de Cerco para 1 para ambos os jogadores."
+    },
+    "storm": {
+      "name": "Tempestade de Skellige",
+      "description": "Reduz a força de todas as unidades de Distância e Cerco para 1."
+    },
+    "hero": {
+      "name": "herói",
+      "description": "Não é afetada por Cartas Especiais ou habilidades."
+    },
+    "decoy": {
+      "name": "Chamariz",
+      "description": "Troque por uma carta no campo de batalha para devolvê-la à sua mão."
+    },
+    "horn": {
+      "name": "Corneta do Comandante",
+      "description": "Dobra a força de todas as cartas de unidade naquela fileira. Limitado a 1 por fileira."
+    },
+    "mardroeme": {
+      "name": "Mardroeme",
+      "description": "Ativa a transformação de todas as cartas Berserker na mesma fileira."
+    },
+    "berserker": {
+      "name": "Berserker",
+      "description": "Transforma-se em urso quando há uma carta Mardroeme em sua fileira."
+    },
+    "vildkarrl": {},
+    "scorch": {
+      "name": "Incinerar",
+      "description": "Descartada após ser jogada. Mata a(s) carta(s) mais forte(s) no campo de batalha."
+    },
+    "scorch_c": {
+      "name": "Incinerar - Corpo a Corpo",
+      "description": "Destrói a(s) unidade(s) de Combate Corpo a Corpo mais forte(s) do inimigo se a força combinada de todas as unidades de Combate Corpo a Corpo dele for 10 ou mais."
+    },
+    "scorch_r": {
+      "name": "Incinerar - Distância",
+      "description": "Destrói a(s) unidade(s) de Combate à Distância mais forte(s) do inimigo se a força combinada de todas as unidades de Combate à Distância dele for 10 ou mais."
+    },
+    "scorch_s": {
+      "name": "Incinerar - Cerco",
+      "description": "Destrói a(s) unidade(s) de Combate de Cerco mais forte(s) do inimigo se a força combinada de todas as unidades de Combate de Cerco dele for 10 ou mais."
+    },
+    "agile": {
+      "name": "ágil",
+      "description": "Pode ser colocada na fileira de Combate Corpo a Corpo ou na de Combate à Distância. Não pode ser movida depois de colocada."
+    },
+    "muster": {
+      "name": "reunir",
+      "description": "Encontre todas as cartas com o mesmo nome no seu baralho e jogue-as imediatamente."
+    },
+    "spy": {
+      "name": "espião",
+      "description": "Coloque no campo de batalha do oponente (conta para o total do oponente) e compre 2 cartas do seu baralho."
+    },
+    "medic": {
+      "name": "médico",
+      "description": "Escolha uma carta da sua pilha de descarte e jogue-a imediatamente (exceto Heróis ou Cartas Especiais)."
+    },
+    "morale": {
+      "name": "Moral",
+      "description": "Adiciona +1 a todas as unidades da fileira (exceto a si mesma)."
+    },
+    "bond": {
+      "name": "Vínculo Estreito",
+      "description": "Coloque ao lado de uma carta com o mesmo nome para dobrar a força de ambas."
+    },
+    "avenger": {
+      "name": "Vingador",
+      "description": "Quando esta carta é removida do campo de batalha, ela invoca uma poderosa nova Carta de Unidade para ocupar seu lugar."
+    },
+    "avenger_kambi": {
+      "name": "Vingador",
+      "description": "Quando esta carta é removida do campo de batalha, ela invoca uma poderosa nova Carta de Unidade para ocupar seu lugar."
+    },
+    "foltest_king": {
+      "description": "Escolha uma carta Névoa Impenetrável do seu baralho e jogue-a imediatamente."
+    },
+    "foltest_lord": {
+      "description": "Remove quaisquer efeitos de clima (resultantes de cartas Gelo Cortante, Chuva Torrencial ou Névoa Impenetrável) em jogo."
+    },
+    "foltest_siegemaster": {
+      "description": "Dobra a força de todas as suas unidades de Cerco (a menos que uma Corneta do Comandante também esteja presente naquela fileira)."
+    },
+    "foltest_steelforged": {
+      "description": "Destrói a(s) unidade(s) de Cerco mais forte(s) do inimigo se a força combinada de todas as unidades de Cerco dele for 10 ou mais."
+    },
+    "foltest_son": {
+      "description": "Destrói a(s) unidade(s) de Combate à Distância mais forte(s) do inimigo se a força combinada de todas as unidades de Combate à Distância dele for 10 ou mais."
+    },
+    "emhyr_imperial": {
+      "description": "Escolha uma carta Chuva Torrencial do seu baralho e jogue-a imediatamente."
+    },
+    "emhyr_emperor": {
+      "description": "Veja 3 cartas aleatórias da mão do seu oponente."
+    },
+    "emhyr_whiteflame": {
+      "description": "Cancela a Habilidade de Líder do seu oponente."
+    },
+    "emhyr_relentless": {
+      "description": "Compre uma carta da pilha de descarte do seu oponente."
+    },
+    "emhyr_invader": {
+      "description": "Habilidades que restauram uma unidade ao campo de batalha restauram uma unidade escolhida aleatoriamente. Afeta ambos os jogadores."
+    },
+    "eredin_commander": {
+      "description": "Dobra a força de todas as suas unidades de Combate Corpo a Corpo (a menos que uma Corneta do Comandante também esteja presente naquela fileira)."
+    },
+    "eredin_bringer_of_death": {
+      "name": "Eredin: Portador da Morte",
+      "description": "Restaure uma carta da sua pilha de descarte para a sua mão."
+    },
+    "eredin_destroyer": {
+      "description": "Descarte 2 cartas e compre 1 carta à sua escolha do seu baralho."
+    },
+    "eredin_king": {
+      "description": "Escolha qualquer carta de clima do seu baralho e jogue-a imediatamente."
+    },
+    "eredin_treacherous": {
+      "description": "Dobra a força de todas as cartas de espião (afeta ambos os jogadores)."
+    },
+    "francesca_queen": {
+      "description": "Destrói a(s) unidade(s) de Combate Corpo a Corpo mais forte(s) do inimigo se a força combinada de todas as unidades de Combate Corpo a Corpo dele for 10 ou mais."
+    },
+    "francesca_beautiful": {
+      "description": "Dobra a força de todas as suas unidades de Combate à Distância (a menos que uma Corneta do Comandante também esteja presente naquela fileira)."
+    },
+    "francesca_daisy": {
+      "description": "Compre uma carta extra no início da batalha."
+    },
+    "francesca_pureblood": {
+      "description": "Escolha uma carta Gelo Cortante do seu baralho e jogue-a imediatamente."
+    },
+    "francesca_hope": {
+      "description": "Move unidades ágeis para a fileira válida que maximiza sua força (não move unidades já na fileira ideal)."
+    },
+    "crach_an_craite": {
+      "description": "Embaralha todas as cartas do cemitério de cada jogador de volta em seus baralhos."
+    },
+    "king_bran": {
+      "description": "As unidades perdem apenas metade da Força em condições de clima ruim."
+    }
+  },
+  "faction": {
+    "realms": {
+      "name": "Reinos do Norte",
+      "description": "Compre uma carta do seu baralho sempre que vencer uma rodada."
+    },
+    "nilfgaard": {
+      "name": "Império de Nilfgaard",
+      "description": "Vence qualquer rodada que termine em empate."
+    },
+    "monsters": {
+      "name": "Monstros",
+      "description": "Mantém uma Carta de Unidade aleatória no campo após cada rodada."
+    },
+    "scoiatael": {
+      "name": "Scoia'tael",
+      "description": "Decide quem joga primeiro."
+    },
+    "skellige": {
+      "name": "Skellige",
+      "description": "2 cartas aleatórias do cemitério são colocadas no campo de batalha no início da terceira rodada."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist/
+coverage/
+apps/web/public/assets/
+.claude/
+skills-lock.json

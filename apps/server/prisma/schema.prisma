@@ -1,0 +1,68 @@
+// Gwent database (PostgreSQL). After changing this file:
+//   pnpm --filter @gwent/server db:migrate   (creates the migration and regenerates the client)
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Local player (no login: the frontend keeps the profile id).
+model Profile {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(40)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  decks     Deck[]
+  matches   Match[]
+}
+
+/// Deck saved on the server. `cards` holds the [id, count] pairs (deck file format),
+/// validated by the application with the same Zod schema as the frontend.
+model Deck {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @db.Uuid
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(60)
+  faction   String   @db.VarChar(20)
+  leader    Int
+  cards     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+/// Finished match. Seed + decks + actions are enough to reproduce everything (replay):
+/// the server checks the result by running the engine itself.
+model Match {
+  id           String   @id @default(uuid()) @db.Uuid
+  profileId    String   @db.Uuid
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// The seed is a uint32: it does not fit in a Postgres Int (int4).
+  seed         BigInt
+  /// "bot" | "online"
+  mode         String   @default("bot") @db.VarChar(10)
+  /// Seat the profile played ("p1" | "p2"); against the bot it is always p1
+  side         String   @default("p1") @db.VarChar(2)
+  /// Factions (to list matches without opening the decks): the profile's and the opponent's
+  faction      String   @db.VarChar(20)
+  opponent     String   @db.VarChar(20)
+  /// Online opponent name (null against the bot)
+  opponentName String?  @db.VarChar(40)
+  /// "win" | "loss" | "draw" from the player's point of view
+  result       String   @db.VarChar(10)
+  /// Score of each round: [{ round, winner, scores }]
+  rounds       Json
+  decks        Json
+  /// Extra match rules (engine mutator ids)
+  mutators     Json     @default("[]")
+  actions      Json
+  createdAt    DateTime @default(now())
+
+  @@index([profileId, createdAt])
+}

@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-game: 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --font-serif: Georgia, serif;
+
+  --color-gold: #ffd864;
+  --color-gold-light: #f3dfae;
+  --color-parchment: #fff6dc;
+  --color-parchment-dark: #e8d8b0;
+  --color-ink: #1b1b1b;
+  --color-ink-soft: #242424;
+  --color-danger: #d4553f;
+
+  /* Fixed 16:9 board (1920x1080 base, scaled by useFitScreen) */
+  --spacing-board-w: 1920px;
+  --spacing-board-h: 1080px;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+
+  body {
+    @apply overflow-hidden bg-ink font-game text-parchment antialiased;
+  }
+}
+
+@layer components {
+  /* Card carousel arrows */
+  .carousel-arrow {
+    @apply absolute top-[44%] z-10 flex size-[4cqw] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-[0.12cqw] border-[goldenrod] bg-[rgba(10,10,10,0.55)] text-[goldenrod] shadow-[0_0_1cqw_rgba(0,0,0,0.6)] transition;
+  }
+  .carousel-arrow:hover:enabled {
+    @apply bg-[rgba(35,30,15,0.9)] text-[#ffd700] shadow-[0_0_1.4cqw_goldenrod];
+  }
+  .carousel-arrow:active:enabled {
+    @apply scale-90;
+  }
+  .carousel-arrow:disabled {
+    @apply pointer-events-none opacity-20;
+  }
+}

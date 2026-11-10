@@ -1,0 +1,38 @@
+# Local infrastructure. The apps run on the host (faster hot reload on Windows).
+# Credentials and ports come from .env (copy of .env.example; `pnpm db:setup` creates it).
+#   docker compose up -d      → starts Postgres (and Adminer at http://localhost:8080)
+#   docker compose down       → stops it (the data stays in the gwent-pg volume)
+# Fixed project name: containers and volume do not depend on the folder name
+name: gwent-remake
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: gwent-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gwent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?missing in .env (copy .env.example or run pnpm db:setup)}
+      POSTGRES_DB: ${POSTGRES_DB:-gwent}
+    ports:
+      # Bound to 127.0.0.1 so the database (simple dev password) is not reachable from the network.
+      - '127.0.0.1:${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - gwent-pg:/var/lib/postgresql/data
+    healthcheck:
+      # $$ = variable of the container, not of docker compose
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  adminer:
+    image: adminer:5
+    container_name: gwent-adminer
+    ports:
+      - '127.0.0.1:${ADMINER_PORT:-8080}:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  gwent-pg:

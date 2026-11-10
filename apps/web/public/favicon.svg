@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A face-down card with a gold frame and a "G" -->
+  <rect x="12" y="4" width="40" height="56" rx="6" fill="#1b1b1b" stroke="#ffd864" stroke-width="3"/>
+  <rect x="18" y="10" width="28" height="44" rx="3" fill="none" stroke="#b8860b" stroke-width="1.5"/>
+  <path d="M41 26a10 10 0 1 0 0 12h-8v-5h4" fill="none" stroke="#ffd864" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
