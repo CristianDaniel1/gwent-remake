@@ -35,7 +35,6 @@ export default defineConfig({
   fullyParallel: true,
   // list in the terminal; html report (pnpm e2e:report) and traces of failures in test-results/
   reporter: [['list'], ['html', { open: 'never' }]],
-  ...(withServer ? { globalSetup: './e2e/global-setup.ts' } : {}),
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
     viewport: { width: 1600, height: 900 },
@@ -58,7 +57,9 @@ export default defineConfig({
     ...(withServer
       ? [
           {
-            command: 'pnpm --filter @gwent/server build && node apps/server/dist/main.js',
+            // Test database first (gwent_test + migrations), then build and start the API
+            command:
+              'pnpm exec tsx scripts/prepare-test-db.ts && pnpm --filter @gwent/server build && node apps/server/dist/main.js',
             url: `http://localhost:${API_PORT}/api/health`,
             reuseExistingServer: !process.env.CI,
             timeout: 120_000,
