@@ -6,7 +6,7 @@ O projeto tem três camadas de teste, do mais rápido para o mais completo:
 | ------------------------- | ------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
 | Unitários e de componente | Vitest + Testing Library              | `*.test.ts(x)` ao lado do código | regras do engine, bot, schemas, stores, componentes React                    |
 | API e tempo real          | Vitest + Supertest + socket.io-client | `apps/server/test/*.e2e.test.ts` | rotas HTTP com banco real, partida inteira por Socket.IO                     |
-| Ponta a ponta (e2e)       | Playwright + axe                      | `e2e/*.spec.ts`                  | o jogo no navegador: partidas, replay, multiplayer, controle, acessibilidade |
+| Ponta a ponta (e2e)       | Playwright + axe                      | `e2e/specs/*.spec.ts`            | o jogo no navegador: partidas, replay, multiplayer, controle, acessibilidade |
 
 ## Resumo dos comandos
 
@@ -28,9 +28,9 @@ pnpm e2e:install     # baixa o Chromium do Playwright
 pnpm db:setup        # opcional: .env + Postgres no Docker + migrações
 ```
 
-- **Sem Docker/Postgres**, tudo roda do mesmo jeito, mas os testes que precisam do servidor são
-  **pulados** (aparece um aviso): API (`apps/server/test/api.e2e.test.ts`), `e2e/online.spec.ts` e
-  `e2e/multiplayer.spec.ts`.
+- **Sem Docker/Postgres**, tudo roda do mesmo jeito, mas os testes que precisam do servidor ficam de
+  fora: a API (`apps/server/test/api.e2e.test.ts`, pulada com um aviso) e os e2e com a tag
+  `@server` (histórico e multiplayer).
 
 ## Testes unitários (Vitest)
 
@@ -59,32 +59,56 @@ pnpm test:watch                              # modo watch
 pnpm e2e                          # tudo (sobe o Vite na porta 5180 e, com Postgres, o server na 3000)
 pnpm e2e replay                   # arquivos cujo nome contém "replay"
 pnpm e2e --grep "hard bot"        # testes cujo nome contém o texto
+pnpm e2e --grep-invert @slow      # sem os testes que jogam partidas inteiras (bem mais rápido)
+pnpm e2e --grep @server           # só os testes que usam o servidor
 pnpm e2e --repeat-each=3          # repetir (bom para caçar testes instáveis)
 pnpm e2e:ui                       # modo interativo
 ```
 
 - O `playwright.config.ts` sobe os servidores sozinho. Se o contêiner `gwent-postgres` estiver
   saudável, ele também compila e sobe o server (banco `gwent_test`, no mesmo Postgres do
-  `DATABASE_URL` de `apps/server/.env`); senão, os testes de servidor
-  são pulados.
+  `DATABASE_URL` de `apps/server/.env`); senão, os testes com a tag `@server` ficam de fora.
 - Os testes usam o jogo em **pt-BR** (os seletores procuram os textos da tela, como
   `'Terminar troca'`), viewport de 1600×900 e seeds fixas (`/game?seed=7`) para as partidas serem
   sempre iguais.
-- `e2e/helpers.ts` → `playWholeMatch(page)` joga uma partida inteira pela interface (troca,
-  escolhas, jogadas e passes) e confere que não houve erros no console. É usado pelos testes de
-  partida, replay, online e multiplayer.
-- Um controle de videogame é simulado substituindo `navigator.getGamepads` (`e2e/gamepad.spec.ts`).
+
+### Estrutura
+
+| Pasta            | Conteúdo                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `e2e/specs/`     | os testes, um arquivo por área do app (`match-bot`, `deck-builder`, `multiplayer`…)                  |
+| `e2e/fixtures/`  | o `test` do projeto: falha com erros de console, `openPlayer` e os page objects prontos              |
+| `e2e/pages/`     | page objects: `MatchPage`, `LobbyPage`, `DeckBuilderPage`, `ReplayPage`, `HistoryPage`               |
+| `e2e/helpers/`   | utilitários sem estado: storage inicial, servidor simulado, arquivos, controle, axe, erros da página |
+| `e2e/constants/` | seeds, chaves do storage, tempos e tags                                                              |
+
+- Importe sempre `test` e `expect` de `e2e/fixtures/test.ts`, nunca direto do `@playwright/test`.
+- **Erros de console:** todo teste falha se a página lançar uma exceção ou registrar um erro no
+  console. Um teste que espera um erro (ex.: servidor simulado com falha) declara o padrão com
+  `test.use({ allowedConsoleErrors: /…/ })`.
+- **Vários jogadores:** `openPlayer('Geralt')` abre outro navegador no lobby online e o fecha no fim
+  do teste. O nome ganha um sufixo único (`player.name`), porque as salas de outros testes dividem o
+  mesmo servidor.
+- `MatchPage.playWholeMatch()` joga uma partida inteira pela interface (troca, escolhas, jogadas e
+  passes). É usado pelos testes de partida, replay, histórico e multiplayer.
+- Um controle de videogame é simulado substituindo `navigator.getGamepads` (`e2e/helpers/gamepad.ts`).
+- **Sem esperas fixas:** nada de `waitForTimeout`. Espere um estado da tela (`expect`,
+  `expect.poll`) ou controle o relógio com `page.clock` (ex.: segurar P por 1 segundo).
+- **Servidor simulado:** `mockServerDown` e `mockServerError` (`e2e/helpers/server-mock.ts`)
+  interceptam só os caminhos `/api/` (os módulos do Vite em `/src/.../api/` continuam carregando),
+  então esses testes rodam com ou sem o servidor de verdade.
+- **Arquivos:** downloads com `page.waitForEvent('download')` e uploads com `setInputFiles`
+  (`jsonFile` monta um arquivo em memória).
 
 ### Quando um e2e falha
 
 1. A saída mostra o passo que falhou e onde está o **trace** (`test-results/.../trace.zip`):
    `pnpm exec playwright show-trace <arquivo>` mostra cada passo com screenshot, DOM e console.
-2. `pnpm e2e:report` abre o relatório HTML.
-3. Testes com várias páginas (multiplayer) só gravam o trace da página principal; quando a partida
-   trava, o helper imprime o que a outra página está vendo (`[stuck ...]`).
-4. `E2E_DEBUG=1 pnpm e2e` imprime os avisos do console das páginas.
-5. A máquina muito carregada deixa tudo mais lento: rode só o teste com problema, ou com menos
-   workers (`pnpm e2e --workers=2`).
+2. `pnpm e2e:report` abre o relatório HTML (com o screenshot do momento da falha).
+3. Testes com várias páginas (multiplayer) só gravam o trace da página principal; quando uma
+   partida não termina no prazo, o erro traz a árvore de acessibilidade da página que travou.
+4. A máquina muito carregada deixa tudo mais lento: rode só o teste com problema, ou com menos
+   workers (`pnpm e2e --workers=2`). No CI, um teste que falha roda mais uma vez.
 
 ## Convenções de nomes
 
@@ -94,9 +118,21 @@ em pt-BR, porque são o que aparece na tela).
 - **Unitários:** `describe('<unidade testada>')` + `it('<faz algo> when <condição>')`, no presente,
   descrevendo o comportamento, não a implementação:
   `it('passes when the opponent has passed and the bot is winning')`.
-- **e2e:** o fluxo do ponto de vista do usuário:
-  `test('player can finish a full match against the bot (seed 7)')`,
-  `test('a spectator can watch a live match without seeing any hand')`.
+- **e2e:** `test.describe('<área do app>')` + `test('<comportamento>')`, no presente e do ponto de
+  vista do usuário, sem "player can" nem "should". Tags no objeto de detalhes, nunca no título, e
+  `test.step` para as fases das jornadas longas:
+
+  ```ts
+  test.describe('Deck builder', () => {
+    test('keeps the edited deck and faction after a reload', …);
+  });
+  test.describe('Multiplayer', { tag: '@server' }, () => {
+    test('lets a spectator watch a live match without seeing any hand', …);
+  });
+  ```
+
+  Tags: `@server` (precisa da API e do banco) e `@slow` (joga partidas inteiras).
+
 - Prefira seletores acessíveis (`getByRole`, `getByLabel`); use `data-*` só quando não houver um
   nome visível (ex.: `[data-target]` marca os alvos de jogada).
 

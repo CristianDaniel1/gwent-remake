@@ -23,26 +23,30 @@ function postgresUp(): boolean {
 }
 
 const withServer = TEST_DATABASE_URL !== null && postgresUp();
-// Read by the helpers (the config also loads in each worker): without the server, the app's
+// Read by e2e/helpers/page-errors.ts (the config also loads in each worker): without the server, the app's
 // requests to /api fail on purpose, and those console errors are expected.
 if (!withServer) process.env.E2E_NO_SERVER = '1';
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './e2e/specs',
   timeout: 180_000,
   // Heavy parallel suite (up to 6 browsers + Vite + Nest): pages take longer to load
   expect: { timeout: 10_000 },
   fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  // Without the API and the database, the tests tagged @server cannot run
+  ...(withServer ? {} : { grepInvert: /@server/ }),
   // list in the terminal; html report (pnpm e2e:report) and traces of failures in test-results/
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: `http://localhost:${WEB_PORT}`,
-    viewport: { width: 1600, height: 900 },
     locale: 'pt-BR',
     // Reduced motion: the app skips the pauses that only show a move, so whole matches stay fast.
-    // e2e/animations.spec.ts turns them back on to check them.
+    // e2e/specs/animations.spec.ts turns them back on to check them.
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
