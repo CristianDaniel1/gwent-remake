@@ -5,9 +5,11 @@ import { assets } from '@/shared/lib/assets';
 import { cn } from '@/shared/lib/cn';
 import { cardKey, targetKey } from '../hooks/useHumanControls';
 import type { WeatherKind } from '../lib/board';
-import { boxIn, ROW_FRAME, ROW_PARTS, box, type Rect } from '../layout';
+import { boxIn, coinRect, ROW_FRAME, ROW_PARTS, box, type Rect } from '../layout';
 import { BoardCard } from './BoardCard';
 import { CardStrip } from './CardStrip';
+import { HornRowAnimation } from './CardAnimations';
+import { useGameStore } from '../store/game.store';
 
 const CARDS_WIDTH_CQW = ROW_PARTS.cards[2] / 19.2;
 
@@ -16,6 +18,8 @@ type BoardRowProps = {
   side: PlayerId;
   row: CombatRow;
   rect: Rect;
+  /** Center of the row's score coin on the board artwork. */
+  coin: readonly [number, number];
   score: RowScore;
   weather: WeatherKind | undefined;
   /** Rows and special slots where the selected card can go ("p1:close"). */
@@ -34,6 +38,7 @@ export function BoardRow({
   side,
   row,
   rect,
+  coin,
   score,
   weather,
   rowTargets,
@@ -50,12 +55,15 @@ export function BoardRow({
   const rowTarget = rowTargets.has(key);
   const specialTarget = specialTargets.has(key);
   const focused = focusedKey === key;
+  const hornSeq = useGameStore((s) =>
+    s.animations?.rows.some((r) => r.side === side && r.row === row) ? s.animations.seq : null,
+  );
 
   return (
     <section style={box(rect)} aria-label={rowName} data-side={side} data-row={row}>
       <div
-        style={boxIn(ROW_FRAME, ROW_PARTS.score)}
-        className="flex items-center justify-center text-[1.8cqw] font-bold text-black [text-shadow:0_0_5px_white]"
+        style={boxIn(rect, coinRect(coin))}
+        className="score-number flex items-center justify-center text-[1.75cqw]"
       >
         <span className="sr-only">{rowName}: </span>
         {score.total}
@@ -72,8 +80,8 @@ export function BoardRow({
             aria-label={rowName}
             onClick={() => onPlayRow(row)}
             className={cn(
-              'absolute inset-0 animate-pulse cursor-pointer bg-gold/20 outline-[0.15cqw] outline-gold',
-              focused && 'animate-none bg-gold/40 outline-[0.3cqw] outline-white',
+              'play-target absolute inset-0 cursor-pointer',
+              focused && 'play-target-focused',
             )}
           />
         )}
@@ -96,6 +104,7 @@ export function BoardRow({
             />
           )}
         />
+        {hornSeq !== null && <HornRowAnimation key={hornSeq} />}
         {rowTarget && (
           <button
             type="button"
@@ -103,8 +112,8 @@ export function BoardRow({
             aria-label={rowName}
             onClick={() => onPlayRow(row)}
             className={cn(
-              'absolute inset-0 z-30 cursor-pointer bg-gold/15 outline-[0.15cqw] outline-gold hover:bg-gold/25',
-              focused && 'bg-gold/30 outline-[0.3cqw] outline-white',
+              'play-target absolute inset-0 z-30 cursor-pointer',
+              focused && 'play-target-focused',
             )}
           />
         )}

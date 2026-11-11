@@ -50,12 +50,28 @@ export const ROWS: Record<'top' | 'bottom', Record<CombatRow, Rect>> = {
 
 /** Row parts, relative to the row rectangle. */
 export const ROW_PARTS = {
-  score: [ROW_X, 9, 51, 126],
   special: [ROW_X + 51, 0, 144, ROW_H],
   cards: [ROW_X + 201, 0, 803, ROW_H],
   weather: [ROW_X + 58, 6, 950, ROW_H],
 } as const satisfies Record<string, Rect>;
 export const ROW_FRAME: Rect = [ROW_X, 0, ROW_W, ROW_H];
+
+/**
+ * Center of each row's score coin, measured on board.jpg (they are not evenly spaced,
+ * so a fixed offset inside the row leaves the number off-center).
+ */
+export const ROW_COINS: Record<'top' | 'bottom', Record<CombatRow, readonly [number, number]>> = {
+  top: { siege: [536.5, 73], ranged: [536.5, 204], close: [536.5, 342.5] },
+  bottom: { close: [535.5, 491.5], ranged: [535.5, 624.5], siege: [535.5, 762.5] },
+};
+const COIN = 50;
+/** Square around a coin center. */
+export const coinRect = ([cx, cy]: readonly [number, number], size = COIN): Rect => [
+  cx - size / 2,
+  cy - size / 2,
+  size,
+  size,
+];
 
 export const LAYOUT = {
   hand: [580, 843, 932, 128],
@@ -64,40 +80,68 @@ export const LAYOUT = {
   leader: { top: [140, 82, 101, 135], bottom: [140, 834, 101, 135] },
   leaderActive: { top: [260, 134, 38, 38], bottom: [260, 886, 38, 38] },
   pass: [321, 884, 102, 43],
+  /** The opponent's hand is not drawn: its cards come from (and go to) the opponent's panel. */
+  opponentHand: [128, 263, 101, 135],
   grave: { top: [1543, 70, 111, 146], bottom: [1543, 826, 111, 146] },
   deck: { top: [1722, 70, 111, 146], bottom: [1722, 825, 111, 146] },
-  preview: [1540, 240, 340, 560],
   notification: [0, 464, 1920, 151],
   exit: [19, 27, 38, 38],
   settings: [19, 80, 38, 38],
   help: [19, 133, 38, 38],
 } as const satisfies Record<string, Rect | Record<string, Rect>>;
 
-/** Player panel parts (the top one has the name on top; the bottom one, below). */
+/** Round total coins, measured on board.jpg (our coin covers the one in the artwork). */
+const TOTAL_COINS = { top: [452.5, 331.5], bottom: [453, 733] } as const;
+
+/** Laurels around a total coin: twice as wide, the coin in the upper middle, the bow below. */
+function laurelRect([cx, cy]: readonly [number, number]): Rect {
+  const w = 112;
+  const h = (w * 78) / 102; // icon_high_score.png
+  return [cx - w / 2, cy - h * 0.4, w, h];
+}
+
+/**
+ * Player panel parts (the top one has the name on top; the bottom one, below).
+ * The portrait sits inside a round frame with the faction shield on its corner;
+ * the round total is a coin on the board edge, with laurels when ahead.
+ */
 export const STATS_PARTS = {
   top: {
-    profile: [128, 276, 99, 108],
-    name: [239, 271, 187, 27],
-    faction: [239, 298, 187, 27],
-    handCount: [240, 338, 77, 40],
+    ring: [118, 270, 118, 120],
+    shield: [98, 272, 50, 54],
+    name: [248, 278, 190, 26],
+    faction: [248, 304, 190, 24],
+    handCount: [248, 336, 72, 42],
     gems: [
-      [360, 338, 41, 42],
-      [319, 338, 41, 42],
+      [366, 337, 40, 40],
+      [324, 337, 40, 40],
     ],
-    total: [426, 305, 54, 54],
+    total: coinRect(TOTAL_COINS.top, 54),
+    laurel: laurelRect(TOTAL_COINS.top),
   },
   bottom: {
-    profile: [128, 679, 99, 108],
-    name: [239, 747, 187, 27],
-    faction: [239, 774, 187, 27],
-    handCount: [240, 691, 77, 40],
+    ring: [118, 672, 118, 120],
+    shield: [98, 742, 50, 54],
+    name: [248, 734, 190, 26],
+    faction: [248, 760, 190, 24],
+    handCount: [248, 680, 72, 42],
     gems: [
-      [360, 685, 41, 42],
-      [319, 685, 41, 42],
+      [366, 681, 40, 40],
+      [324, 681, 40, 40],
     ],
-    total: [426, 708, 54, 54],
+    total: coinRect(TOTAL_COINS.bottom, 54),
+    laurel: laurelRect(TOTAL_COINS.bottom),
   },
-} as const;
+} as const satisfies Record<'top' | 'bottom', Record<string, Rect | readonly Rect[]>>;
+
+/**
+ * Card enlarged on the right (hover, selection and the opponent's played card) and,
+ * below it, the box with its abilities. The box grows down, over the piles.
+ */
+export const PREVIEW = {
+  card: [1568, 228, 296, 560],
+  info: [1520, 796, 392, 0],
+} as const satisfies Record<string, Rect>;
 
 /** Size of a board card (4.45% x 6.35% of the width). */
 export const CARD_W_CQW = 4.45;

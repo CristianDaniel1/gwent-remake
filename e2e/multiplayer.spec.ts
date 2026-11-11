@@ -8,6 +8,8 @@ async function openLobby(browser: Browser, name: string): Promise<Page> {
   const context = await browser.newContext({
     locale: 'pt-BR',
     viewport: { width: 1600, height: 900 },
+    // A context made by hand does not get the config's "use" options
+    reducedMotion: 'reduce',
   });
   const page = await context.newPage();
   await page.goto('/online');

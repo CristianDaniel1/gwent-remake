@@ -15,6 +15,47 @@
   /* Fixed 16:9 board (1920x1080 base, scaled by useFitScreen) */
   --spacing-board-w: 1920px;
   --spacing-board-h: 1080px;
+
+  /* Active player's panel: slow golden pulse */
+  --animate-turn-pulse: turn-pulse 1.8s ease-in-out infinite;
+  @keyframes turn-pulse {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Hero landing on the board: flames flickering around the edges */
+  --animate-hero-flames: hero-flames 0.35s ease-in-out infinite alternate;
+  @keyframes hero-flames {
+    0% {
+      box-shadow:
+        0 0 0.35cqw 0.05cqw rgba(255, 120, 20, 0.9),
+        0 -0.2cqw 0.7cqw rgba(255, 60, 0, 0.55),
+        inset 0 0 0.3cqw rgba(255, 150, 40, 0.6);
+    }
+    35% {
+      box-shadow:
+        0 0 0.5cqw 0.1cqw rgba(255, 150, 30, 0.95),
+        0 -0.35cqw 0.9cqw rgba(255, 80, 0, 0.7),
+        inset 0 0 0.4cqw rgba(255, 170, 60, 0.7);
+    }
+    70% {
+      box-shadow:
+        0 0 0.3cqw 0.05cqw rgba(255, 100, 10, 0.85),
+        0 -0.15cqw 0.6cqw rgba(230, 50, 0, 0.5),
+        inset 0 0 0.25cqw rgba(255, 140, 30, 0.5);
+    }
+    100% {
+      box-shadow:
+        0 0 0.55cqw 0.12cqw rgba(255, 170, 50, 1),
+        0 -0.4cqw 1cqw rgba(255, 90, 0, 0.75),
+        inset 0 0 0.45cqw rgba(255, 180, 70, 0.75);
+    }
+  }
 }
 
 @layer base {
@@ -30,6 +71,72 @@
 }
 
 @layer components {
+  /* Where the selected card can go: a soft golden glow (brighter under the mouse/keyboard) */
+  .play-target {
+    border-radius: 0.2cqw;
+    background: linear-gradient(180deg, rgba(255, 205, 110, 0.07), rgba(255, 190, 80, 0.13));
+    box-shadow:
+      inset 0 0 0 0.07cqw rgba(230, 190, 110, 0.5),
+      inset 0 0 1.4cqw rgba(255, 190, 80, 0.18);
+    transition:
+      background 0.2s,
+      box-shadow 0.2s;
+  }
+  .play-target:hover,
+  .play-target-focused {
+    background: linear-gradient(180deg, rgba(255, 210, 120, 0.14), rgba(255, 190, 80, 0.22));
+    box-shadow:
+      inset 0 0 0 0.1cqw rgba(255, 220, 140, 0.85),
+      inset 0 0 1.8cqw rgba(255, 195, 90, 0.35),
+      0 0 0.8cqw rgba(255, 190, 80, 0.3);
+  }
+
+  /* "Pass" button: a dark plate with a double golden frame */
+  .pass-button {
+    @apply rounded-[0.3cqw] text-[1.1cqw] font-bold tracking-[0.1em] whitespace-nowrap text-gold-light uppercase;
+    border: 0.08cqw solid #b8924f;
+    background: linear-gradient(180deg, #3b2c1c 0%, #241a10 55%, #17100a 100%);
+    box-shadow:
+      inset 0 0 0 0.12cqw rgba(0, 0, 0, 0.55),
+      inset 0 0 0 0.18cqw rgba(214, 178, 110, 0.35),
+      inset 0 0.1cqw 0 rgba(255, 230, 170, 0.18),
+      0 0.15cqw 0.5cqw rgba(0, 0, 0, 0.75);
+    text-shadow: 0 0.08cqw 0.15cqw black;
+    transition:
+      color 0.2s,
+      border-color 0.2s,
+      box-shadow 0.2s,
+      filter 0.2s;
+  }
+  .pass-button:enabled {
+    cursor: pointer;
+  }
+  .pass-button:enabled:hover {
+    @apply text-gold;
+    border-color: #ffd864;
+    box-shadow:
+      inset 0 0 0 0.12cqw rgba(0, 0, 0, 0.5),
+      inset 0 0 0 0.18cqw rgba(255, 216, 100, 0.55),
+      inset 0 0.1cqw 0 rgba(255, 230, 170, 0.25),
+      0 0 0.9cqw rgba(255, 190, 80, 0.45);
+  }
+  .pass-button:enabled:active {
+    filter: brightness(0.9);
+  }
+  .pass-button:disabled {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+  }
+
+  /* Score numbers on the coins: black with a white halo, as on the original board */
+  .score-number {
+    @apply leading-none font-bold text-black;
+    text-shadow:
+      0 0 0.12cqw #fff,
+      0 0 0.25cqw #fff,
+      0 0 0.45cqw rgba(255, 255, 255, 0.9);
+  }
+
   /* Card carousel arrows */
   .carousel-arrow {
     @apply absolute top-[44%] z-10 flex size-[4cqw] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-[0.12cqw] border-[goldenrod] bg-[rgba(10,10,10,0.55)] text-[goldenrod] shadow-[0_0_1cqw_rgba(0,0,0,0.6)] transition;

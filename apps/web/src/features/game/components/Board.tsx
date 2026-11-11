@@ -14,7 +14,7 @@ import { useHumanControls } from '../hooks/useHumanControls';
 import { useMatchRecording } from '../hooks/useMatchRecording';
 import { PASS_HOLD_MS, useKeyboardControls } from '../hooks/useKeyboardControls';
 import { weatherOverlays } from '../lib/board';
-import { box, LAYOUT, ROWS } from '../layout';
+import { box, LAYOUT, ROW_COINS, ROWS } from '../layout';
 import { useGameStore, type BoardMatch } from '../store/game.store';
 import { useUiStore } from '../store/ui.store';
 import { BoardRow } from './BoardRow';
@@ -22,6 +22,7 @@ import { CardListModal } from './CardListModal';
 import { CardPreview } from './CardPreview';
 import { ChoiceModal } from './ChoiceModal';
 import { EndScreen } from './EndScreen';
+import { FlyingCards } from './FlyingCards';
 import { Hand } from './Hand';
 import { KeyboardHelp } from './KeyboardHelp';
 import { LeaderSlot } from './LeaderSlot';
@@ -30,6 +31,7 @@ import { NoticeBanner } from './NoticeBanner';
 import { Piles } from './Piles';
 import { PlayerStats } from './PlayerStats';
 import { RedrawModal } from './RedrawModal';
+import { SpotlightCard } from './SpotlightCard';
 import { WeatherZone } from './WeatherZone';
 
 type BoardProps = {
@@ -128,6 +130,9 @@ export function Board({
   const redrawing = !readOnly && state.phase === 'redraw' && !state.players[human].redrawDone;
   // A replay shows the result in its own controls instead of the end screen
   const gameOver = state.phase === 'gameOver' && !noticeShowing && !readOnly;
+  /** Whose turn it is (the panel glows); a pending choice belongs to who must answer it. */
+  const turn =
+    state.phase !== 'playing' ? null : (state.pendingChoice?.player ?? state.currentPlayer);
 
   return (
     <Stage background={assets.board()}>
@@ -140,6 +145,7 @@ export function Board({
             side={side}
             row={row}
             rect={ROWS[position][row]}
+            coin={ROW_COINS[position][row]}
             score={score[side].rows[row]}
             weather={weather[row]}
             rowTargets={targets.rows}
@@ -164,6 +170,7 @@ export function Board({
         name={opponentName}
         total={score[bot].total}
         leading={score[bot].total > score[human].total}
+        active={turn === bot}
       />
       <PlayerStats
         player={state.players[human]}
@@ -171,6 +178,7 @@ export function Board({
         name={humanName}
         total={score[human].total}
         leading={score[human].total > score[bot].total}
+        active={turn === human}
       />
       <LeaderSlot state={state} player={bot} position="top" selectable={false} />
       <LeaderSlot
@@ -182,18 +190,19 @@ export function Board({
       <Piles state={state} player={bot} position="top" />
       <Piles state={state} player={human} position="bottom" />
       <Hand state={state} player={human} playable={playable} />
+      <FlyingCards human={human} />
 
       <button
         type="button"
         style={box(LAYOUT.pass)}
         disabled={!controls.canPass}
         onClick={controls.pass}
-        className="relative overflow-hidden rounded-[0.5cqw] border-[0.1cqw] border-gold bg-ink/90 text-[1.6cqw] font-bold whitespace-nowrap enabled:cursor-pointer enabled:hover:bg-gold/20 disabled:opacity-40"
+        className="pass-button relative overflow-hidden"
       >
         {/* "Hold to pass" bar (P/F shortcut) */}
         <span
           aria-hidden
-          className="absolute inset-y-0 left-0 bg-gold/40 ease-linear"
+          className="absolute inset-y-0 left-0 bg-[linear-gradient(90deg,rgba(255,200,90,0.15),rgba(255,210,120,0.45))] ease-linear"
           style={{
             width: passHolding ? '100%' : '0%',
             transitionProperty: 'width',
@@ -241,6 +250,7 @@ export function Board({
 
       <MutatorBadges mutators={state.mutators} />
       <CardPreview state={state} primaryAction={primaryAction} />
+      <SpotlightCard />
       <NoticeBanner />
 
       <AnimatePresence>

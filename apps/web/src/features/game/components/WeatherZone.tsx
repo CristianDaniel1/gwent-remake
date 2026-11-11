@@ -38,8 +38,8 @@ export function WeatherZone({ state, onPlay, focused }: WeatherZoneProps) {
           aria-label={t('match.weather')}
           onClick={onPlay}
           className={cn(
-            'absolute inset-0 cursor-pointer bg-gold/15 outline-[0.15cqw] outline-gold hover:bg-gold/25',
-            focused && 'bg-gold/30 outline-[0.3cqw] outline-white',
+            'play-target absolute inset-0 cursor-pointer',
+            focused && 'play-target-focused',
           )}
         />
       )}

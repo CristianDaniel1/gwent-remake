@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { defOf, type CardInstanceId, type GameState } from '@gwent/engine';
 import { GameCard, type GameCardProps } from '@/shared/ui/GameCard';
 import { sfx } from '@/shared/audio/audio-manager';
 import { useCardText } from '@/shared/i18n/useCardText';
 import { useUiStore, type CardListView } from '../store/ui.store';
+import { useGameStore } from '../store/game.store';
+import { AbilityIcon, BurnAnimation, HeroFlames } from './CardAnimations';
 
 type BoardCardProps = {
   state: GameState;
@@ -18,7 +21,7 @@ type BoardCardProps = {
   detailsOnClick?: boolean;
 } & Pick<
   GameCardProps,
-  'power' | 'onClick' | 'selected' | 'highlighted' | 'focused' | 'size' | 'className'
+  'power' | 'onClick' | 'selected' | 'highlighted' | 'focused' | 'size' | 'className' | 'lift'
 >;
 
 /**
@@ -45,12 +48,22 @@ export function BoardCard({
       }
     : undefined;
   const click = onClick ?? (detailsOnClick ? openDetails : undefined);
+  const animation = useCardAnimation(id);
+
+  // A played card leaves from under the mouse without a "mouse leave": drop its preview
+  useEffect(
+    () => () => {
+      if (useUiStore.getState().hovered === id) useUiStore.getState().hover(null);
+    },
+    [id],
+  );
 
   return (
     <GameCard
       def={def}
       label={cardText(def).name}
       layoutId={id}
+      overlay={animation}
       onHoverChange={(hovering) => {
         hover(hovering ? id : null);
         if (hovering && hoverSound) sfx.play('ui_card');
@@ -66,5 +79,23 @@ export function BoardCard({
         : {})}
       {...props}
     />
+  );
+}
+
+/** Ability animation (or burning) for a card on the board, if it has one now. */
+function useCardAnimation(id: CardInstanceId) {
+  const burning = useGameStore((s) => s.burning.includes(id));
+  const anim = useGameStore((s) => s.animations?.cards[id]);
+  const heroSeq = useGameStore((s) =>
+    s.animations?.heroes.includes(id) ? s.animations.seq : undefined,
+  );
+  const seq = useGameStore((s) => (s.animations?.cards[id] ? s.animations.seq : undefined));
+  if (burning) return <BurnAnimation />;
+  if (!anim && heroSeq === undefined) return null;
+  return (
+    <>
+      {heroSeq !== undefined && <HeroFlames key={`hero-${heroSeq}`} />}
+      {anim && <AbilityIcon key={seq} anim={anim} />}
+    </>
   );
 }

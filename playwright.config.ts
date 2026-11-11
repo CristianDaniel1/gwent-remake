@@ -39,6 +39,9 @@ export default defineConfig({
     baseURL: `http://localhost:${WEB_PORT}`,
     viewport: { width: 1600, height: 900 },
     locale: 'pt-BR',
+    // Reduced motion: the app skips the pauses that only show a move, so whole matches stay fast.
+    // e2e/animations.spec.ts turns them back on to check them.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
   projects: [

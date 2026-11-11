@@ -1,6 +1,6 @@
 import type { CardDef } from '@gwent/engine';
-import { m } from 'motion/react';
-import { memo, type MouseEventHandler } from 'react';
+import { m, type Transition } from 'motion/react';
+import { memo, type MouseEventHandler, type ReactNode } from 'react';
 import { assets } from '@/shared/lib/assets';
 import { abilityIcon, powerIcon, rowIcon } from '@/shared/lib/card-visuals';
 import { cn } from '@/shared/lib/cn';
@@ -24,7 +24,35 @@ export type GameCardProps = {
   className?: string;
   /** Lifts a little under the mouse (hand/board cards). Off in the carousel. */
   lift?: boolean;
+  /** Drawn over the card (ability animations). */
+  overlay?: ReactNode;
 };
+
+/** Golden wave while the card is picked: a ring spreading out and a light crossing the card, on a loop. */
+function SelectWave() {
+  return (
+    <>
+      <m.span
+        aria-hidden
+        initial={{ opacity: 0.9, scale: 1 }}
+        animate={{ opacity: 0, scale: 1.35 }}
+        transition={{ duration: 0.9, ease: 'easeOut', repeat: Infinity, repeatDelay: 0.5 }}
+        className="pointer-events-none absolute inset-0 z-20 rounded-[0.3cqw] border-[0.2cqw] border-gold shadow-[0_0_1cqw_#ffd864]"
+      />
+      <span aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+        <m.span
+          initial={{ x: '-120%' }}
+          animate={{ x: '120%' }}
+          transition={{ duration: 0.9, ease: 'easeInOut', repeat: Infinity, repeatDelay: 0.5 }}
+          className="absolute inset-y-0 -left-1/4 w-[150%] bg-[linear-gradient(110deg,transparent_30%,rgba(255,225,140,0.75)_50%,transparent_70%)]"
+        />
+      </span>
+    </>
+  );
+}
+
+/** Moving between zones (hand → row → grave…): a smooth flight. */
+const LAYOUT_TRANSITION: Transition = { layout: { duration: 0.55, ease: [0.25, 0.8, 0.3, 1] } };
 
 /** Card with the strength, row and ability badges (at board size). A button when clickable. */
 export const GameCard = memo(function GameCard({
@@ -41,6 +69,7 @@ export const GameCard = memo(function GameCard({
   onContextMenu,
   className,
   lift = true,
+  overlay,
 }: GameCardProps) {
   const shown = power ?? def.strength;
   // The large image already has strength, icons and name drawn on it; the small one gets the badges on top.
@@ -51,7 +80,7 @@ export const GameCard = memo(function GameCard({
   const image = size === 'fill' ? assets.cardLg(def.image) : assets.cardSm(def.image);
 
   const shared = {
-    ...(layoutId ? { layoutId } : {}),
+    ...(layoutId ? { layoutId, transition: LAYOUT_TRANSITION } : {}),
     'aria-label': label,
     title: label,
     onMouseEnter: () => onHoverChange?.(true),
@@ -61,7 +90,8 @@ export const GameCard = memo(function GameCard({
       'relative shrink-0 bg-contain bg-center bg-no-repeat shadow-[0_0_0.4cqw_rgba(0,0,0,0.6)]',
       size === 'board' ? 'h-[6.35cqw] w-[4.45cqw]' : 'h-full w-full',
       onClick ? 'cursor-pointer' : 'cursor-default',
-      selected && 'outline-gold z-10 -translate-y-[0.6cqw] outline-[0.2cqw]',
+      selected &&
+        'outline-gold z-10 -translate-y-[0.6cqw] shadow-[0_0_1.2cqw_rgba(255,216,100,0.8)] outline-[0.2cqw]',
       highlighted && 'outline-[0.15cqw] outline-lime-300',
       focused && 'z-10 -translate-y-[0.4cqw] outline-[0.25cqw] outline-white',
       className,
@@ -73,6 +103,7 @@ export const GameCard = memo(function GameCard({
 
   const content = (
     <>
+      {selected && <SelectWave />}
       {powerBadge && (
         <span
           aria-hidden
@@ -108,6 +139,7 @@ export const GameCard = memo(function GameCard({
           style={{ backgroundImage: `url(${row})` }}
         />
       )}
+      {overlay}
     </>
   );
 

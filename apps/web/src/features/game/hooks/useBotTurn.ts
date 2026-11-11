@@ -14,7 +14,7 @@ const HARD_DELAY_MS = 300;
  */
 export function useBotTurn() {
   const match = useGameStore((s) => s.match);
-  const busy = useGameStore((s) => s.notices.length > 0);
+  const busy = useGameStore((s) => s.notices.length > 0 || s.settling);
   const dispatch = useGameStore((s) => s.dispatch);
 
   useEffect(() => {
