@@ -1,50 +1,55 @@
-import { Eye } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { useShallow } from 'zustand/react/shallow';
 import { Board, useGameSounds, useGameStore } from '@/features/game';
-import { Button } from '@/shared/ui/Button';
-import { Modal } from '@/shared/ui/Modal';
+import { reportError } from '@/shared/lib/report-error';
+import { RoomClosedModal } from './components/RoomClosedModal';
+import { SpectatorCount } from './components/SpectatorCount';
 import { useOnlineStore } from './store/online.store';
 
-/** Multiplayer table: the same board, with the state coming from the server. */
-export function OnlineGamePage() {
-  const { t } = useTranslation();
+export const OnlineGamePage = () => {
+  const { t: translate } = useTranslation();
   const navigate = useNavigate();
-  const match = useGameStore((s) => s.match);
-  const clearMatch = useGameStore((s) => s.leave);
+  const match = useGameStore((store) => store.match);
+  const clearMatch = useGameStore((store) => store.leave);
   const { room, phase, closedReason, rematch, leave, resume } = useOnlineStore(
-    useShallow((s) => ({
-      room: s.room,
-      phase: s.phase,
-      closedReason: s.closedReason,
-      rematch: s.rematch,
-      leave: s.leave,
-      resume: s.resume,
+    useShallow((store) => ({
+      room: store.room,
+      phase: store.phase,
+      closedReason: store.closedReason,
+      rematch: store.rematch,
+      leave: store.leave,
+      resume: store.resume,
     })),
   );
   useGameSounds();
 
-  // No online match in memory (e.g. reloaded page): try to get back into the room.
   const hasMatch = match?.mode === 'online';
   useEffect(() => {
     if (hasMatch) return;
-    void resume().then((ok) => {
-      if (!ok) void navigate('/online', { replace: true });
-    });
+    const returnToRoom = async () => {
+      try {
+        const resumed = await resume();
+        if (!resumed) await navigate('/online', { replace: true });
+      } catch (error) {
+        reportError('online game: resume', error);
+      }
+    };
+    void returnToRoom();
   }, [hasMatch, resume, navigate]);
 
   if (match?.mode !== 'online') return null;
 
   const me = room?.seats[match.human];
   const opponent = room?.seats[match.opponent];
-  const rematchNote = me?.wantsRematch
-    ? t('online.rematchWaiting')
-    : opponent?.wantsRematch
-      ? t('online.rematchOffered', { name: opponent.name })
-      : null;
+  const spectators = room?.spectators ?? 0;
+  const rematchNote = () => {
+    if (me?.wantsRematch) return translate('online.rematchWaiting');
+    if (opponent?.wantsRematch) return translate('online.rematchOffered', { name: opponent.name });
+    return null;
+  };
 
   const exitTo = (path: string) => {
     leave();
@@ -57,15 +62,13 @@ export function OnlineGamePage() {
       match={match}
       onPlayAgain={rematch}
       onExit={() => exitTo('/')}
-      playAgainLabel={t('online.rematch')}
-      endNote={rematchNote}
+      playAgainLabel={translate('online.rematch')}
+      endNote={rematchNote()}
       overlay={
         <>
-          {/* Players know when someone is watching */}
-          {(room?.spectators ?? 0) > 0 && (
-            <p className="absolute top-[1%] right-[22%] z-40 flex items-center gap-[0.3cqw] rounded border border-gold/40 bg-ink/85 px-[0.6cqw] py-[0.2cqw] text-[0.95cqw] text-[tan]">
-              <Eye aria-hidden className="size-[1cqw]" />
-              {t('online.spectators', { count: room?.spectators ?? 0 })}
+          {spectators > 0 && (
+            <p className="absolute top-[1%] right-[22%] z-40 rounded border border-gold/40 bg-ink/85 px-[0.6cqw] py-[0.2cqw] text-[0.95cqw]">
+              <SpectatorCount count={spectators} />
             </p>
           )}
           {opponent && !opponent.connected && phase !== 'closed' && (
@@ -73,24 +76,20 @@ export function OnlineGamePage() {
               role="status"
               className="absolute top-[1%] left-1/2 z-40 -translate-x-1/2 rounded border border-gold/50 bg-ink/90 px-[1cqw] py-[0.4cqw] text-[1.1cqw]"
             >
-              {t('online.opponentDisconnected', { name: opponent.name })}
+              {translate('online.opponentDisconnected', { name: opponent.name })}
             </p>
           )}
           <AnimatePresence>
             {phase === 'closed' && closedReason && (
-              <Modal
+              <RoomClosedModal
                 key="closed"
-                title={t(`online.closed.${closedReason}`)}
-                footer={
-                  <Button onClick={() => exitTo('/online')}>{t('online.backToLobby')}</Button>
-                }
-              >
-                {null}
-              </Modal>
+                title={translate(`online.closed.${closedReason}`)}
+                onBack={() => exitTo('/online')}
+              />
             )}
           </AnimatePresence>
         </>
       }
     />
   );
-}
+};

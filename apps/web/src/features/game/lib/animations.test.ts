@@ -15,44 +15,43 @@ const { state: initial } = createGame({
   decks: { p1: PREMADE_DECKS[0] as DeckList, p2: PREMADE_DECKS[2] as DeckList },
 });
 
-/** Two hand cards of p1 moved to its close row (and a third in the special slot). */
-function board() {
+const board = () => {
   const state = structuredClone(initial);
-  const [a, b, c] = state.players.p1.hand as unknown as [
+  const [action, right, card] = state.players.p1.hand as unknown as [
     CardInstanceId,
     CardInstanceId,
     CardInstanceId,
   ];
   state.players.p1.hand = state.players.p1.hand.slice(3);
-  state.players.p1.rows.close.units = [a, b];
-  state.players.p1.rows.ranged.special = c;
-  return { state, a, b, c };
-}
+  state.players.p1.rows.close.units = [action, right];
+  state.players.p1.rows.ranged.special = card;
+  return { state, a: action, b: right, c: card };
+};
 
 describe('move animations', () => {
   it('shows the ability icon over the card that triggered it', () => {
-    const { state, a } = board();
+    const { state, a: action } = board();
     const result = animationsFrom(
-      [{ type: 'ABILITY_TRIGGERED', ability: 'medic', player: 'p1', cardId: a }],
+      [{ type: 'ABILITY_TRIGGERED', ability: 'medic', player: 'p1', cardId: action }],
       state,
     );
-    expect(result.cards).toEqual({ [a]: 'medic' });
+    expect(result.cards).toEqual({ [action]: 'medic' });
     expect(result.rows).toEqual([]);
   });
 
   it("lights the whole row for the Commander's Horn, also from the special slot", () => {
-    const { state, c } = board();
+    const { state, c: card } = board();
     const result = animationsFrom(
-      [{ type: 'ABILITY_TRIGGERED', ability: 'horn', player: 'p1', cardId: c }],
+      [{ type: 'ABILITY_TRIGGERED', ability: 'horn', player: 'p1', cardId: card }],
       state,
     );
     expect(result.rows).toEqual([{ side: 'p1', row: 'ranged', anim: 'horn' }]);
   });
 
   it('ignores abilities without an animation', () => {
-    const { state, a } = board();
+    const { state, a: action } = board();
     const result = animationsFrom(
-      [{ type: 'ABILITY_TRIGGERED', ability: 'decoy', player: 'p1', cardId: a }],
+      [{ type: 'ABILITY_TRIGGERED', ability: 'decoy', player: 'p1', cardId: action }],
       state,
     );
     expect(result).toEqual({ cards: {}, rows: [], heroes: [] });
@@ -79,11 +78,11 @@ describe('move animations', () => {
   });
 
   it("spotlights only the opponent's card", () => {
-    const { state, a } = board();
+    const { state, a: action } = board();
     const played = (player: 'p1' | 'p2'): GameEvent[] => [
-      { type: 'CARD_PLAYED', player, cardId: a } as GameEvent,
+      { type: 'CARD_PLAYED', player, cardId: action } as GameEvent,
     ];
-    expect(opponentReveal(played('p2'), 'p1', state)).toBe(a);
+    expect(opponentReveal(played('p2'), 'p1', state)).toBe(action);
     expect(opponentReveal(played('p1'), 'p1', state)).toBeNull();
   });
 
@@ -107,17 +106,16 @@ describe('move animations', () => {
 });
 
 describe('cards flying to and from the piles', () => {
-  /** p1 with cards x, y, z taken from the hand to put in other zones. */
-  function cards() {
+  const cards = () => {
     const state = structuredClone(initial);
-    const [x, y, z] = state.players.p1.hand as unknown as [
+    const [first, second, third] = state.players.p1.hand as unknown as [
       CardInstanceId,
       CardInstanceId,
       CardInstanceId,
     ];
     state.players.p1.hand = state.players.p1.hand.slice(3);
-    return { state, x, y, z };
-  }
+    return { state, x: first, y: second, z: third };
+  };
   const move = (
     cardId: CardInstanceId,
     from: Zone,
@@ -139,7 +137,6 @@ describe('cards flying to and from the piles', () => {
     expect(arrivals(events, before.state, after, 'p1', null)).toEqual([
       { cardId: before.x, zone: grave },
     ]);
-    // Excluded when it is already shown another way (the spotlight)
     expect(arrivals(events, before.state, after, 'p1', before.x)).toEqual([]);
   });
 
@@ -153,22 +150,34 @@ describe('cards flying to and from the piles', () => {
   });
 
   it("flies drawn cards from the deck to the human's hand, not to the opponent's", () => {
-    const { state, x } = cards();
+    const { state, x: left } = cards();
     const after = structuredClone(state);
-    after.players.p1.hand = [x, ...after.players.p1.hand];
+    after.players.p1.hand = [left, ...after.players.p1.hand];
     expect(
-      arrivals([move(x, deck, { kind: 'hand', player: 'p1' }, 'draw')], state, after, 'p1', null),
-    ).toEqual([{ cardId: x, zone: deck }]);
+      arrivals(
+        [move(left, deck, { kind: 'hand', player: 'p1' }, 'draw')],
+        state,
+        after,
+        'p1',
+        null,
+      ),
+    ).toEqual([{ cardId: left, zone: deck }]);
     expect(
-      arrivals([move(x, deck, { kind: 'hand', player: 'p1' }, 'draw')], state, after, 'p2', null),
+      arrivals(
+        [move(left, deck, { kind: 'hand', player: 'p1' }, 'draw')],
+        state,
+        after,
+        'p2',
+        null,
+      ),
     ).toEqual([]);
   });
 
   it('flies cards buried in the grave from the board, but not the new top card', () => {
-    const { state, x, y } = cards();
+    const { state, x: left, y: top } = cards();
     const after = structuredClone(state);
-    after.players.p1.grave = [x, y];
-    const events = [move(x, row, grave, 'destroy'), move(y, row, grave, 'destroy')];
-    expect(departures(events, after, 'p1')).toEqual([{ cardId: x, zone: grave }]);
+    after.players.p1.grave = [left, top];
+    const events = [move(left, row, grave, 'destroy'), move(top, row, grave, 'destroy')];
+    expect(departures(events, after, 'p1')).toEqual([{ cardId: left, zone: grave }]);
   });
 });

@@ -1,48 +1,31 @@
 import type { GameState } from '@gwent/engine';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/shared/lib/cn';
-import { box, LAYOUT } from '../layout';
+import { box } from '../lib/layout';
+import { LAYOUT, WEATHER_WIDTH_CQW } from '../data/layout';
 import { BoardCard } from './BoardCard';
 import { CardStrip } from './CardStrip';
+import { PlayTarget } from './PlayTarget';
 
-const WEATHER_WIDTH_CQW = LAYOUT.weather[2] / 19.2;
-
-type WeatherZoneProps = {
+interface WeatherZoneProps {
   state: GameState;
-  /** A selected weather/Scorch card can be played here. */
   onPlay: (() => void) | null;
-  /** Target chosen with the keyboard. */
   focused: boolean;
-};
+}
 
-export function WeatherZone({ state, onPlay, focused }: WeatherZoneProps) {
-  const { t } = useTranslation();
+export const WeatherZone = ({ state, onPlay, focused }: WeatherZoneProps) => {
+  const { t: translate } = useTranslation();
+  const label = translate('match.weather');
   return (
-    <section style={box(LAYOUT.weather)} aria-label={t('match.weather')}>
+    <section style={box(LAYOUT.weather)} aria-label={label}>
       <CardStrip
         items={state.weather}
         widthCqw={WEATHER_WIDTH_CQW}
         getKey={(id) => id}
         renderItem={(id) => (
-          <BoardCard
-            state={state}
-            id={id}
-            details={{ title: t('match.weather'), cardIds: state.weather }}
-          />
+          <BoardCard state={state} id={id} details={{ title: label, cardIds: state.weather }} />
         )}
       />
-      {onPlay && (
-        <button
-          type="button"
-          data-target
-          aria-label={t('match.weather')}
-          onClick={onPlay}
-          className={cn(
-            'play-target absolute inset-0 cursor-pointer',
-            focused && 'play-target-focused',
-          )}
-        />
-      )}
+      {onPlay && <PlayTarget label={label} focused={focused} onClick={onPlay} />}
     </section>
   );
-}
+};

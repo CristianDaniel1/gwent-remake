@@ -7,7 +7,9 @@ import {
   type GameEvent,
 } from '@gwent/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LANDING_MS, SPOTLIGHT_MS, useGameStore } from './game.store';
+import { LANDING_MS } from '../constants/timings';
+import { SPOTLIGHT_MS } from '../constants/timings';
+import { useGameStore } from './game.store';
 
 const { state } = createGame({
   seed: 1,
@@ -16,9 +18,9 @@ const { state } = createGame({
 const update = { you: 'p1' as const, state: projectFor(state, 'p1'), events: [] };
 const endRedraw = { type: 'END_REDRAW', player: 'p1' } as const;
 
-function startOnline(send: (action: unknown) => Promise<boolean>) {
+const startOnline = (send: (action: unknown) => Promise<boolean>) => {
   useGameStore.getState().receiveOnline(update, { opponentName: 'Ciri', send });
-}
+};
 
 const awaiting = () => {
   const match = useGameStore.getState().match;
@@ -34,11 +36,9 @@ describe('game store online', () => {
 
     expect(useGameStore.getState().dispatch(endRedraw)).toBe(true);
     expect(awaiting()).toBe(true);
-    // Second click before the answer: it does not leave the browser
     expect(useGameStore.getState().dispatch(endRedraw)).toBe(false);
     expect(send).toHaveBeenCalledTimes(1);
 
-    // The new server state unlocks the interface
     startOnline(send);
     expect(awaiting()).toBe(false);
   });
@@ -52,7 +52,6 @@ describe('game store online', () => {
 
 describe('presenting the opponent move', () => {
   const card = update.state.players.p1.hand[0] as CardInstanceId;
-  /** A new server state where p2 played `card` and the turn came back to p1. */
   const opponentPlayed = (extra: GameEvent[] = []) => ({
     you: 'p1' as const,
     state: structuredClone(update.state),
@@ -68,7 +67,6 @@ describe('presenting the opponent move', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     store().receiveOnline(update, connection);
-    // Starts with the opponent's turn, so the "your turn" notice is expected later
     useGameStore.setState({ notices: [], lastTurn: 'p2' });
   });
   afterEach(() => vi.useRealTimers());
@@ -95,7 +93,7 @@ describe('presenting the opponent move', () => {
     expect(store().settling).toBe(true);
 
     vi.advanceTimersByTime(LANDING_MS);
-    expect(store().notices.map((n) => n.key)).toEqual(['me-turn']);
+    expect(store().notices.map((notice) => notice.key)).toEqual(['me-turn']);
     expect(store().settling).toBe(false);
   });
 
@@ -123,7 +121,7 @@ describe('presenting the opponent move', () => {
       expect(store().spotlight).toBeNull();
       expect(store().match?.state).toBe(next.state);
       expect(store().settling).toBe(false);
-      expect(store().notices.map((n) => n.key)).toEqual(['me-turn']);
+      expect(store().notices.map((notice) => notice.key)).toEqual(['me-turn']);
     } finally {
       vi.unstubAllGlobals();
     }

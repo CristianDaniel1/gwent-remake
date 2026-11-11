@@ -1,51 +1,46 @@
 import { useTranslation } from 'react-i18next';
-import { assets } from '@/shared/lib/assets';
-import type { OpponentDeck } from '../store/decks.store';
+import { useFactionText } from '@/shared/i18n/useFactionText';
+import { FactionShield } from '@/shared/ui/FactionShield';
 import { FileButton } from '@/shared/ui/FileButton';
+import type { OpponentDeck } from '../interfaces/decks-store';
 import { MatchOptions } from './MatchOptions';
+import { UNDERLINED_LINK } from '../constants/styles';
 
-type OpponentPickerProps = {
+interface OpponentPickerProps {
   opponent: OpponentDeck;
   onUpload: (text: string) => void;
   onRandom: () => void;
-};
+}
 
-const LINK =
-  'text-parchment cursor-pointer text-[1cqw] underline-offset-2 hover:text-gold hover:underline';
-
-/** Bot deck (random premade or uploaded by the player), its difficulty and the match rules. */
-export function OpponentPicker({ opponent, onUpload, onRandom }: OpponentPickerProps) {
-  const { t } = useTranslation();
-  const tGame = useTranslation('game').t;
-  const tCards = useTranslation('cards').t;
+export const OpponentPicker = ({ opponent, onUpload, onRandom }: OpponentPickerProps) => {
+  const { t: translate } = useTranslation();
+  const { t: translateGame } = useTranslation('game');
+  const factionText = useFactionText();
 
   return (
     <section className="flex flex-col items-center gap-[0.3cqw] text-center">
-      <h2 className="text-[1.1cqw] text-gold">{tGame('deck.opponentsDeck')}</h2>
+      <h2 className="text-[1.1cqw] text-gold">{translateGame('deck.opponentsDeck')}</h2>
       {opponent.kind === 'random' ? (
-        <p className="text-[1cqw]">{tGame('deck.random')}</p>
+        <p className="text-[1cqw]">{translateGame('deck.random')}</p>
       ) : (
         <p className="flex items-center gap-[0.3cqw] text-[1cqw]">
-          <span
-            aria-hidden
-            className="size-[1.2cqw] bg-contain bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `url(${assets.icon(`deck_shield_${opponent.deck.faction}`)})`,
-            }}
-          />
-          {t('deckBuilder.opponentCustom')}:{' '}
-          {tCards(`faction.${opponent.deck.faction}.name` as never) as unknown as string}
+          <FactionShield faction={opponent.deck.faction} className="size-[1.2cqw]" />
+          {translate('deckBuilder.opponentCustom')}: {factionText(opponent.deck.faction)}
         </p>
       )}
       <div className="flex gap-[1cqw]">
-        <FileButton label={t('deckBuilder.uploadOpponent')} onText={onUpload} className={LINK} />
+        <FileButton
+          label={translate('deckBuilder.uploadOpponent')}
+          onText={onUpload}
+          className={UNDERLINED_LINK}
+        />
         {opponent.kind === 'custom' && (
-          <button type="button" className={LINK} onClick={onRandom}>
-            {t('deckBuilder.removeOpponent')}
+          <button type="button" className={UNDERLINED_LINK} onClick={onRandom}>
+            {translate('deckBuilder.removeOpponent')}
           </button>
         )}
       </div>
       <MatchOptions />
     </section>
   );
-}
+};

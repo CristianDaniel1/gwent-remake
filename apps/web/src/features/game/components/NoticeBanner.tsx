@@ -3,29 +3,25 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettingsStore } from '@/features/settings';
 import { assets } from '@/shared/lib/assets';
-import { box, LAYOUT } from '../layout';
+import { box } from '../lib/layout';
+import { LAYOUT } from '../data/layout';
+import { NOTICE_MS } from '../constants/timings';
 import { useGameStore } from '../store/game.store';
 
-/** Time each notification stays on screen (enough to read it). */
-export const NOTICE_MS = 1400;
-
-/** Notification banner in the middle of the board ("Your turn!", "You won the round!"…). */
-export function NoticeBanner() {
-  const { t } = useTranslation('game');
-  const notice = useGameStore((s) => s.notices[0]);
-  const dismiss = useGameStore((s) => s.dismissNotice);
-  const enabled = useSettingsStore((s) => s.notifications);
+export const NoticeBanner = () => {
+  const { t: translate } = useTranslation('game');
+  const notice = useGameStore((store) => store.notices[0]);
+  const dismiss = useGameStore((store) => store.dismissNotice);
+  const enabled = useSettingsStore((store) => store.notifications);
 
   useEffect(() => {
     if (!notice) return;
-    // Turned off in the settings: the queue is emptied without showing anything.
     const timer = setTimeout(dismiss, enabled ? NOTICE_MS : 0);
     return () => clearTimeout(timer);
   }, [notice, dismiss, enabled]);
 
   return (
     <div style={box(LAYOUT.notification)} className="pointer-events-none z-40">
-      {/* One notice at a time, always in the same place (the next one waits for the exit) */}
       <AnimatePresence mode="wait">
         {notice && (
           <m.div
@@ -52,11 +48,11 @@ export function NoticeBanner() {
               transition={{ duration: 0.35, delay: 0.1 }}
               className="max-w-[50%] text-[2.4cqw] text-gold-light [text-shadow:0_0_0.5cqw_black]"
             >
-              {t(`notif.${notice.key}` as never) as unknown as string}
+              {translate(`notif.${notice.key}` as never) as unknown as string}
             </m.p>
           </m.div>
         )}
       </AnimatePresence>
     </div>
   );
-}
+};

@@ -1,23 +1,15 @@
-import type { PlayerId, Zone } from '@gwent/engine';
-import { box, LAYOUT, type Rect } from '../layout';
+import type { PlayerId } from '@gwent/engine';
+import { box } from '../lib/layout';
+import { pileRect } from '../lib/piles';
 import { useGameStore } from '../store/game.store';
 import { BoardCard } from './BoardCard';
 
-/** Where a pile is on the board, from the human's point of view. */
-function pileRect(zone: Zone, human: PlayerId): Rect | null {
-  const side = (player: PlayerId) => (player === human ? 'bottom' : 'top');
-  if (zone.kind === 'deck') return LAYOUT.deck[side(zone.player)];
-  if (zone.kind === 'grave') return LAYOUT.grave[side(zone.player)];
-  if (zone.kind === 'hand' && zone.player !== human) return LAYOUT.opponentHand;
-  return null;
+interface FlyingCardsProps {
+  human: PlayerId;
 }
 
-/**
- * Cards drawn for a moment over a pile (deck, grave, opponent's hand). They share the
- * layoutId of the board card, so Motion flies them between the pile and the board.
- */
-export function FlyingCards({ human }: { human: PlayerId }) {
-  const flights = useGameStore((s) => s.flights);
+export const FlyingCards = ({ human }: FlyingCardsProps) => {
+  const flights = useGameStore((store) => store.flights);
   if (!flights) return null;
   return flights.cards.map(({ cardId, zone }) => {
     const rect = pileRect(zone, human);
@@ -34,4 +26,4 @@ export function FlyingCards({ human }: { human: PlayerId }) {
       </div>
     );
   });
-}
+};

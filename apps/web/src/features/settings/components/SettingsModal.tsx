@@ -1,76 +1,61 @@
-import { useId, type ReactNode } from 'react';
+import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/react/shallow';
 import { Button } from '@/shared/ui/Button';
 import { Modal } from '@/shared/ui/Modal';
+import { Toggle } from '@/shared/ui/Toggle';
 import { useSettingsStore } from '../store/settings.store';
 import { LanguageSelect } from './LanguageSelect';
 
-type SettingsModalProps = { onClose: () => void };
-
-function Toggle({
-  checked,
-  onChange,
-  children,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  children: ReactNode;
-}) {
-  const id = useId();
-  return (
-    <label htmlFor={id} className="flex items-center gap-[0.6cqw] text-[1.1cqw]">
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="size-[1.1cqw] accent-gold"
-      />
-      {children}
-    </label>
-  );
+interface SettingsModalProps {
+  onClose: () => void;
 }
 
-export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { t } = useTranslation();
-  const settings = useSettingsStore();
+export const SettingsModal = ({ onClose }: SettingsModalProps) => {
+  const { t: translate } = useTranslation();
   const volumeId = useId();
+  const { notifications, sound, soundVolume, music, update } = useSettingsStore(
+    useShallow((store) => ({
+      notifications: store.notifications,
+      sound: store.sound,
+      soundVolume: store.soundVolume,
+      music: store.music,
+      update: store.update,
+    })),
+  );
 
   return (
     <Modal
-      title={t('settings.title')}
-      footer={<Button onClick={onClose}>{t('match.close')}</Button>}
+      title={translate('settings.title')}
+      footer={<Button onClick={onClose}>{translate('match.close')}</Button>}
     >
       <div className="flex flex-col gap-[1cqw] px-[1cqw]">
         <LanguageSelect />
-        <Toggle
-          checked={settings.notifications}
-          onChange={(notifications) => settings.update({ notifications })}
-        >
-          {t('settings.notifications')}
+        <Toggle checked={notifications} onChange={(value) => update({ notifications: value })}>
+          {translate('settings.notifications')}
         </Toggle>
-        <Toggle checked={settings.sound} onChange={(sound) => settings.update({ sound })}>
-          {t('settings.sound')}
+        <Toggle checked={sound} onChange={(value) => update({ sound: value })}>
+          {translate('settings.sound')}
         </Toggle>
         <label htmlFor={volumeId} className="flex items-center gap-[0.6cqw] text-[1.1cqw]">
-          {t('settings.soundVolume')}
+          {translate('settings.soundVolume')}
           <input
             id={volumeId}
             type="range"
             min={0}
             max={1}
             step={0.05}
-            disabled={!settings.sound}
-            value={settings.soundVolume}
-            onChange={(e) => settings.update({ soundVolume: Number(e.target.value) })}
+            disabled={!sound}
+            value={soundVolume}
+            onChange={(event) => update({ soundVolume: Number(event.target.value) })}
             className="w-[12cqw] accent-gold"
           />
         </label>
-        <Toggle checked={settings.music} onChange={(music) => settings.update({ music })}>
-          {t('settings.music')}
+        <Toggle checked={music} onChange={(value) => update({ music: value })}>
+          {translate('settings.music')}
         </Toggle>
-        <p className="max-w-[30cqw] text-[0.8cqw] text-[tan]">{t('settings.musicHint')}</p>
+        <p className="max-w-[30cqw] text-[0.8cqw] text-[tan]">{translate('settings.musicHint')}</p>
       </div>
     </Modal>
   );
-}
+};

@@ -1,20 +1,29 @@
-import { defOf, type CombatRow, type GameState } from '@gwent/engine';
+import { defOf, type CombatRow, type GameState, type PlayerId } from '@gwent/engine';
+import type { WeatherKind } from '../interfaces/board';
+import { WEATHER_ROW } from '../data/weather';
 
-export type WeatherKind = 'frost' | 'fog' | 'rain';
-
-const WEATHER_ROW: Record<WeatherKind, CombatRow> = {
-  frost: 'close',
-  fog: 'ranged',
-  rain: 'siege',
-};
-
-/** Which weather covers each row (applies to both sides). */
-export function weatherOverlays(state: GameState): Partial<Record<CombatRow, WeatherKind>> {
-  const out: Partial<Record<CombatRow, WeatherKind>> = {};
+/**
+ * Finds the weather covering each row.
+ *
+ * @param state - Game state.
+ * @returns The weather kind by row.
+ */
+export const weatherOverlays = (state: GameState): Partial<Record<CombatRow, WeatherKind>> => {
+  const overlays: Partial<Record<CombatRow, WeatherKind>> = {};
   for (const id of state.weather) {
     for (const ability of defOf(state, id).abilities) {
-      if (ability in WEATHER_ROW) out[WEATHER_ROW[ability as WeatherKind]] = ability as WeatherKind;
+      if (ability in WEATHER_ROW)
+        overlays[WEATHER_ROW[ability as WeatherKind]] = ability as WeatherKind;
     }
   }
-  return out;
-}
+  return overlays;
+};
+
+/**
+ * Finds the player who must act now.
+ *
+ * @param state - Game state.
+ * @returns The player, or null outside the playing phase.
+ */
+export const currentTurn = (state: GameState): PlayerId | null =>
+  state.phase === 'playing' ? (state.pendingChoice?.player ?? state.currentPlayer) : null;

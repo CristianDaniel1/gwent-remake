@@ -2,17 +2,16 @@ import { Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { mutatorText } from '@/shared/i18n/mutator-text';
 
-/** Extra rules of the match, shown at the top of the board (description on hover). */
-export function MutatorBadges({ mutators }: { mutators: readonly string[] }) {
-  const { t } = useTranslation();
-  if (mutators.length === 0) return null;
+export const MutatorBadges = ({ mutators }: { mutators: readonly string[] }) => {
+  const { t: translate } = useTranslation();
+  if (!mutators.length) return null;
   return (
     <ul
-      aria-label={t('mutators.active')}
+      aria-label={translate('mutators.active')}
       className="absolute top-[0.6%] left-1/2 z-30 flex -translate-x-1/2 gap-[0.4cqw]"
     >
       {mutators.map((id) => {
-        const text = mutatorText(t, id);
+        const text = mutatorText(translate, id);
         return (
           <li
             key={id}
@@ -27,4 +26,4 @@ export function MutatorBadges({ mutators }: { mutators: readonly string[] }) {
       })}
     </ul>
   );
-}
+};

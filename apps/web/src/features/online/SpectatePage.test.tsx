@@ -25,7 +25,7 @@ const room: RoomView = {
 const initial = useOnlineStore.getState();
 afterEach(() => useOnlineStore.setState(initial, true));
 
-function watching() {
+const watching = () => {
   const leave = vi.fn();
   useOnlineStore.setState({
     phase: 'watching',
@@ -37,7 +37,7 @@ function watching() {
     route: { path: '/online/watch', entry: '/online/watch' },
   });
   return { leave };
-}
+};
 
 describe('SpectatePage', () => {
   it('shows the live match with both hands face down and the spectator count', () => {
@@ -45,7 +45,6 @@ describe('SpectatePage', () => {
     expect(screen.getByRole('region', { name: 'Geralt' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Ciri' })).toBeInTheDocument();
     expect(screen.getByText('2 assistindo')).toBeInTheDocument();
-    // The hand at the bottom has only card backs: nothing to click or read
     const hand = screen.getByRole('region', { name: /cartas na mão/ });
     expect(within(hand).queryAllByRole('button')).toHaveLength(0);
     expect(within(hand).queryAllByRole('img')).toHaveLength(0);
@@ -56,7 +55,7 @@ describe('SpectatePage', () => {
     const panels = () =>
       screen
         .getAllByRole('region', { name: /^(Geralt|Ciri)$/ })
-        .map((p) => p.getAttribute('aria-label'));
+        .map((panel) => panel.getAttribute('aria-label'));
     expect(panels()).toEqual(['Ciri', 'Geralt']);
     await userEvent.click(screen.getByRole('button', { name: 'Ver do lado de Ciri' }));
     expect(panels()).toEqual(['Geralt', 'Ciri']);

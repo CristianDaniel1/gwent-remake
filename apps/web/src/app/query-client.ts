@@ -1,14 +1,14 @@
 import { QueryClient } from '@tanstack/react-query';
 
 /**
- * Server state (TanStack Query). The game works without the server,
- * so there are no retries or noisy errors when it is down.
+ * Creates the query client with retries and window-focus refetching turned off.
+ *
+ * @returns The configured query client.
  */
-export function createQueryClient() {
-  return new QueryClient({
+export const createQueryClient = () =>
+  new QueryClient({
     defaultOptions: {
       queries: { retry: false, staleTime: 30_000, refetchOnWindowFocus: false },
       mutations: { retry: false },
     },
   });
-}

@@ -76,7 +76,6 @@ describe('HistoryPage', () => {
     const match: MatchSummary = {
       id: '33333333-3333-4333-8333-333333333333',
       mode: 'online',
-      // The profile played as p2: its scores come second in the API but first on screen
       side: 'p2',
       faction: 'realms',
       opponent: 'monsters',

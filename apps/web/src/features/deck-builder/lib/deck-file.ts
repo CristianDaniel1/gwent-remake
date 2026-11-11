@@ -1,16 +1,15 @@
 import type { DeckList } from '@gwent/engine';
 import { DeckSchema } from '@gwent/shared';
 import { downloadText } from '@/shared/lib/download';
-
-export type ImportResult =
-  { ok: true; deck: DeckList } | { ok: false; error: 'notParsable' | 'badFormat' };
+import type { ImportResult } from '../interfaces/deck-file';
 
 /**
- * Reads a JSON deck file:
- * { "faction": "realms", "leader": 24, "cards": [[id, count], ...] }.
- * Only checks the format; the rules (minimum units etc.) show up in the deck builder.
+ * Parses a deck file, checking only its format.
+ *
+ * @param text - File content.
+ * @returns The deck, or the reason it could not be read.
  */
-export function parseDeckFile(text: string): ImportResult {
+export const parseDeckFile = (text: string): ImportResult => {
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -19,13 +18,22 @@ export function parseDeckFile(text: string): ImportResult {
   }
   const parsed = DeckSchema.safeParse(json);
   return parsed.success ? { ok: true, deck: parsed.data } : { ok: false, error: 'badFormat' };
-}
+};
 
-export function deckToJson(deck: DeckList): string {
-  return JSON.stringify({ faction: deck.faction, leader: deck.leader, cards: deck.cards });
-}
+/**
+ * Serializes a deck to the deck file format.
+ *
+ * @param deck - Deck to serialize.
+ * @returns The JSON text.
+ */
+export const deckToJson = (deck: DeckList): string =>
+  JSON.stringify({ faction: deck.faction, leader: deck.leader, cards: deck.cards });
 
-/** Downloads the deck as a .json file. */
-export function downloadDeck(deck: DeckList): void {
+/**
+ * Downloads a deck as a JSON file.
+ *
+ * @param deck - Deck to download.
+ */
+export const downloadDeck = (deck: DeckList): void => {
   downloadText(`gwent-${deck.faction}.json`, deckToJson(deck));
-}
+};

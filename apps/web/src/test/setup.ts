@@ -8,7 +8,6 @@ import i18n from '@/shared/i18n';
 void i18n.changeLanguage('pt-BR');
 bootSettings();
 
-// jsdom does not implement audio
 window.HTMLMediaElement.prototype.play = () => Promise.resolve();
 window.HTMLMediaElement.prototype.pause = () => {};
 

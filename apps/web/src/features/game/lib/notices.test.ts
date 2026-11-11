@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { noticesFrom } from './notices';
 
 const keys = (events: GameEvent[], lastTurn: 'p1' | 'p2' | null = null) =>
-  noticesFrom(events, 'p1', lastTurn).notices.map((n) => n.key);
+  noticesFrom(events, 'p1', lastTurn).notices.map((notice) => notice.key);
 
 describe('noticesFrom', () => {
   it('announces the round start followed by the turn notice', () => {

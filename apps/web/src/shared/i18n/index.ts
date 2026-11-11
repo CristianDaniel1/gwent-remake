@@ -14,7 +14,6 @@ void i18n
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: { es: ['en'], default: ['pt-BR'] },
     interpolation: { escapeValue: false },
-    // Only on the first visit: afterwards the language saved in the settings wins (features/settings).
     detection: { order: ['navigator'], caches: [] },
   });
 

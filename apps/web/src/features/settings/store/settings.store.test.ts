@@ -17,12 +17,12 @@ describe('saved settings', () => {
       }),
     );
     await useSettingsStore.persist.rehydrate();
-    const s = useSettingsStore.getState();
-    expect(s.language).toBeNull();
-    expect(s.notifications).toBe(true);
-    expect(s.sound).toBe(false); // this one was valid and stays
-    expect(s.soundVolume).toBe(0.5);
-    expect(s.music).toBe(true);
+    const settings = useSettingsStore.getState();
+    expect(settings.language).toBeNull();
+    expect(settings.notifications).toBe(true);
+    expect(settings.sound).toBe(false);
+    expect(settings.soundVolume).toBe(0.5);
+    expect(settings.music).toBe(true);
     localStorage.clear();
   });
 });

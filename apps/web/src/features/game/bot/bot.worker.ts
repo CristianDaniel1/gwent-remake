@@ -1,11 +1,9 @@
 /// <reference lib="webworker" />
 import { chooseAiActionFor, randomFrom } from '@gwent/engine';
-import type { BotRequest, BotResponse } from './protocol';
+import type { BotResponse } from '../interfaces/bot';
+import type { BotRequest } from '../interfaces/bot';
+import { MAX_SAMPLES } from '../constants/bot';
 
-/** Upper bound of simulated worlds per move; the time budget usually stops earlier. */
-const MAX_SAMPLES = 64;
-
-// The hard bot thinks here, off the main thread, so the board keeps animating.
 self.onmessage = (event: MessageEvent<BotRequest>) => {
   const { id, state, player, seed, budgetMs } = event.data;
   const started = performance.now();

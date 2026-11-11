@@ -1,14 +1,11 @@
 import { m } from 'motion/react';
-import { box, PREVIEW } from '../layout';
+import { box } from '../lib/layout';
+import { PREVIEW } from '../data/layout';
 import { useGameStore } from '../store/game.store';
 import { BoardCard } from './BoardCard';
 
-/**
- * The card the opponent just played, enlarged: it comes from the opponent's side,
- * stays a moment and then flies to its place (same layoutId as the board card).
- */
-export function SpotlightCard() {
-  const spotlight = useGameStore((s) => s.spotlight);
+export const SpotlightCard = () => {
+  const spotlight = useGameStore((store) => store.spotlight);
   if (!spotlight) return null;
   return (
     <div data-testid="opponent-card" style={box(PREVIEW.card)} className="pointer-events-none z-40">
@@ -26,4 +23,4 @@ export function SpotlightCard() {
       </m.div>
     </div>
   );
-}
+};

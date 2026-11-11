@@ -1,43 +1,63 @@
 import { ApiErrorSchema, type ApiError } from '@gwent/shared';
-import type { z } from 'zod';
+import type { RequestOptions } from '../interfaces/http';
 
-/** Error from an API call (HTTP status + standard body, if any). */
+/** Error of an API request, with the HTTP status (0 for network failures) and the error body. */
 export class ApiRequestError extends Error {
   constructor(
     readonly status: number,
     readonly body: ApiError | null,
+    options?: ErrorOptions,
   ) {
-    super(body?.message ?? `Erro HTTP ${status}`);
+    super(body?.message ?? `Erro HTTP ${status}`, options);
     this.name = 'ApiRequestError';
   }
 }
 
-interface RequestOptions<T> {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  body?: unknown;
-  /** Response schema (the same as the server's): the response is validated before reaching the UI. */
-  schema?: z.ZodType<T>;
-  signal?: AbortSignal;
-}
+const buildRequest = <T>(options: RequestOptions<T>): RequestInit => {
+  const request: RequestInit = { method: options.method ?? 'GET' };
+  if ('body' in options) {
+    request.headers = { 'content-type': 'application/json' };
+    request.body = JSON.stringify(options.body);
+  }
+  if (options.signal) request.signal = options.signal;
+  return request;
+};
 
-/** Call to the Nest API (in dev, Vite forwards /api to localhost:3000). */
-export async function apiRequest<T = void>(
+const readJson = async (response: Response): Promise<unknown> => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const send = async (url: URL, request: RequestInit): Promise<Response> => {
+  try {
+    return await fetch(url, request);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    throw new ApiRequestError(0, null, { cause: error });
+  }
+};
+
+/**
+ * Calls the API and validates the response.
+ *
+ * @param path - Path after /api.
+ * @param options - Method, body, response schema and abort signal.
+ * @returns The parsed response, or undefined without a schema.
+ */
+export const apiRequest = async <T = void>(
   path: string,
   options: RequestOptions<T> = {},
-): Promise<T> {
+): Promise<T> => {
   const url = new URL(`/api${path}`, window.location.origin);
-  const init: RequestInit = { method: options.method ?? 'GET' };
-  if (options.body !== undefined) {
-    init.headers = { 'content-type': 'application/json' };
-    init.body = JSON.stringify(options.body);
-  }
-  if (options.signal) init.signal = options.signal;
-  const response = await fetch(url, init);
+  const response = await send(url, buildRequest(options));
 
   if (!response.ok) {
-    const parsed = ApiErrorSchema.safeParse(await response.json().catch(() => null));
+    const parsed = ApiErrorSchema.safeParse(await readJson(response));
     throw new ApiRequestError(response.status, parsed.success ? parsed.data : null);
   }
   if (response.status === 204 || !options.schema) return undefined as T;
-  return options.schema.parse(await response.json());
-}
+  return options.schema.parse(await readJson(response));
+};

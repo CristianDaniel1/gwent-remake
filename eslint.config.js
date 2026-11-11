@@ -5,6 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import { oneComponentPerFile } from './eslint/one-component-per-file.js';
 
 const el = (type) => ({ element: { type } });
 const policy = (from, to) => ({ from: el(from), allow: to.map((t) => ({ to: el(t) })) });
@@ -98,11 +99,26 @@ export default tseslint.config(
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser } },
-    plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+      local: { rules: { 'one-component-per-file': oneComponentPerFile } },
+    },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Components and helpers as arrow functions; object shapes as interfaces
+      'func-style': ['error', 'expression'],
+      'prefer-arrow-callback': 'error',
+      'arrow-body-style': ['error', 'as-needed'],
+      '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
+      // Arrow functions are not hoisted: using one before its line can fail at load time
+      '@typescript-eslint/no-use-before-define': ['error', { ignoreTypeReferences: true }],
     },
+  },
+  {
+    files: ['apps/web/**/*.tsx'],
+    rules: { 'local/one-component-per-file': 'error' },
   },
   prettier,
 );

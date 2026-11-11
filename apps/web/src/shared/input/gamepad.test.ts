@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
-  nextInDirection,
-  PadTracker,
-  pressedControls,
-  REPEAT_DELAY_MS,
-  REPEAT_EVERY_MS,
-  type PadControl,
-} from './gamepad';
+import { nextInDirection, PadTracker, pressedControls } from './gamepad';
+import type { PadControl } from '../interfaces/gamepad';
+import { REPEAT_EVERY_MS } from '../constants/gamepad';
+import { REPEAT_DELAY_MS } from '../constants/gamepad';
 
 const pad = (pressed: number[], axes: number[] = [0, 0]) => ({
-  buttons: Array.from({ length: 17 }, (_, i) => pressed.includes(i)),
+  buttons: Array.from({ length: 17 }, (_, index) => pressed.includes(index)),
   axes,
 });
 
@@ -26,7 +22,7 @@ describe('pressedControls', () => {
 });
 
 describe('PadTracker', () => {
-  const set = (...c: PadControl[]) => new Set(c);
+  const set = (...card: PadControl[]) => new Set(card);
 
   it('emits press and release once each', () => {
     const tracker = new PadTracker();
@@ -49,8 +45,7 @@ describe('PadTracker', () => {
 });
 
 describe('nextInDirection', () => {
-  const box = (x: number, y: number) => ({ x, y, width: 10, height: 10 });
-  // 2x2 grid and a far button on the same line
+  const box = (left: number, top: number) => ({ x: left, y: top, width: 10, height: 10 });
   const grid = [box(0, 0), box(100, 0), box(0, 100), box(100, 100), box(400, 0)];
 
   it('prefers the aligned neighbor over a diagonal one', () => {

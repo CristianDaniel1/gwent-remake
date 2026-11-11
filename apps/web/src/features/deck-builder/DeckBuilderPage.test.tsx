@@ -34,8 +34,8 @@ describe('DeckBuilderPage', () => {
   });
 
   it('blocks starting with an incomplete deck and shows the reason', () => {
-    useDecksStore.setState((s) => ({
-      decks: { ...s.decks, realms: { faction: 'realms', leader: 22, cards: [[27, 1]] } },
+    useDecksStore.setState((state) => ({
+      decks: { ...state.decks, realms: { faction: 'realms', leader: 22, cards: [[27, 1]] } },
     }));
     renderWithProviders(<DeckBuilderPage />);
     expect(screen.getByRole('button', { name: 'Iniciar jogo' })).toBeDisabled();
@@ -91,7 +91,6 @@ describe('DeckBuilderPage', () => {
     expect(useSettingsStore.getState().mutators).toEqual(['noLeaders', 'inspiration']);
     await userEvent.click(within(rules).getByRole('checkbox', { name: 'Sem líderes' }));
     expect(useSettingsStore.getState().mutators).toEqual(['inspiration']);
-    // The summary next to the button counts the rules
     expect(screen.getByText('Normal · 1 mutador')).toBeInTheDocument();
     useSettingsStore.getState().update({ mutators: [] });
   });

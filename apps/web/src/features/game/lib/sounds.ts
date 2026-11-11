@@ -1,96 +1,73 @@
 import { defOf, type GameEvent, type GameState, type PlayerId } from '@gwent/engine';
-import type { SoundKey } from '@/shared/audio/audio-manager';
-import type { Notice } from './notices';
+import type { SoundKey } from '@/shared/interfaces/audio';
+import { ABILITY_SOUNDS, NOTICE_SOUNDS, PLACEMENT_REASONS } from '../data/sounds';
+import type { Notice } from '../interfaces/notices';
+import type { CardMovedEvent } from '../interfaces/events';
 
-/** Sound of each ability. */
-const ABILITY_SOUNDS: Record<string, SoundKey> = {
-  horn: 'horn',
-  spy: 'spy',
-  medic: 'medic',
-  morale: 'morale',
-  bond: 'bond',
-  decoy: 'decoy',
-  scorch: 'scorch',
-  muster: 'muster',
-  mardroeme: 'mardroeme',
-  berserker: 'mardroeme',
-  frost: 'frost',
-  fog: 'fog',
-  rain: 'rain',
-  storm: 'fog', // the sound of the card's last ability
-  clear: 'clear',
-};
-
-// Transformation (berserker → bear) only plays the Mardroeme sound.
-const PLACEMENT_REASONS = new Set(['play', 'muster', 'revive', 'summon']);
-
-/** Sound of a card entering a row: hero, or the row sound. */
-function placementSound(state: GameState, e: Extract<GameEvent, { type: 'CARD_MOVED' }>) {
-  if (e.to.kind !== 'row' || !PLACEMENT_REASONS.has(e.reason) || !state.cards[e.cardId])
+const placementSound = (state: GameState, event: CardMovedEvent): SoundKey | null => {
+  if (event.to.kind !== 'row' || !PLACEMENT_REASONS.has(event.reason) || !state.cards[event.cardId])
     return null;
-  const def = defOf(state, e.cardId);
-  // Spy and Decoy already have their own ability sound
+  const def = defOf(state, event.cardId);
   if (def.abilities.includes('spy') || def.abilities.includes('decoy')) return null;
   if (def.hero) return 'hero';
-  return `common_${e.to.row}` as const;
-}
+  return `common_${event.to.row}`;
+};
+
+const cardMovedSound = (state: GameState, event: CardMovedEvent): SoundKey | null => {
+  if (event.reason === 'draw') return state.round === 0 ? 'game_start' : 'draw';
+  if (event.reason === 'discard' && event.to.kind === 'grave') return 'discard';
+  return placementSound(state, event);
+};
+
+const eventSound = (event: GameEvent, state: GameState, human: PlayerId): SoundKey | null => {
+  switch (event.type) {
+    case 'COIN_TOSSED':
+    case 'FIRST_PLAYER_CHOSEN':
+      return 'game_opening';
+    case 'CARD_REDRAWN':
+      return 'redraw';
+    case 'CARD_MOVED':
+      return cardMovedSound(state, event);
+    case 'ABILITY_TRIGGERED':
+      return ABILITY_SOUNDS[event.ability] ?? null;
+    case 'MUTATOR_TRIGGERED':
+      return event.mutator === 'inspiration' ? 'morale' : null;
+    case 'ROUND_STARTED':
+      return event.round === 1 ? 'round1_start' : null;
+    case 'PLAYER_PASSED':
+      return 'pass';
+    case 'ROUND_ENDED':
+      return event.winner === human ? 'round_win' : 'round_lose';
+    case 'GAME_ENDED':
+      return event.result === human ? 'game_win' : 'game_lose';
+    default:
+      return null;
+  }
+};
 
 /**
- * Sounds of a batch of events, in order, without repeats. `state` is the state after the events
- * (to know the card types); `notices` decides the turn sounds (only when the turn changes).
+ * Lists the sounds of a move, in order and without repeats.
+ *
+ * @param events - Events of the move.
+ * @param notices - Notices of the move.
+ * @param state - State after the move.
+ * @param human - Human player.
+ * @returns The sound keys.
  */
-export function soundsFor(
+export const soundsFor = (
   events: readonly GameEvent[],
   notices: readonly Notice[],
   state: GameState,
   human: PlayerId,
-): SoundKey[] {
-  const out: SoundKey[] = [];
-  const add = (key: SoundKey | null) => {
-    if (key && !out.includes(key)) out.push(key);
-  };
-
-  for (const e of events) {
-    switch (e.type) {
-      case 'COIN_TOSSED':
-      case 'FIRST_PLAYER_CHOSEN':
-        add('game_opening');
-        break;
-      case 'CARD_REDRAWN':
-        add('redraw');
-        break;
-      case 'CARD_MOVED':
-        // The 10 starting cards: game start sound (before the redraw)
-        if (e.reason === 'draw') add(state.round === 0 ? 'game_start' : 'draw');
-        else if (e.reason === 'discard' && e.to.kind === 'grave') add('discard');
-        else add(placementSound(state, e));
-        break;
-      case 'ABILITY_TRIGGERED':
-        add(ABILITY_SOUNDS[e.ability] ?? null);
-        break;
-      case 'MUTATOR_TRIGGERED':
-        // Inspiration boosts a unit: same sound as morale
-        if (e.mutator === 'inspiration') add('morale');
-        break;
-      case 'ROUND_STARTED':
-        if (e.round === 1) add('round1_start');
-        break;
-      case 'PLAYER_PASSED':
-        add('pass');
-        break;
-      case 'ROUND_ENDED':
-        add(e.winner === human ? 'round_win' : 'round_lose');
-        break;
-      case 'GAME_ENDED':
-        add(e.result === human ? 'game_win' : 'game_lose');
-        break;
-      default:
-        break;
-    }
+): SoundKey[] => {
+  const sounds = new Set<SoundKey>();
+  for (const event of events) {
+    const sound = eventSound(event, state, human);
+    if (sound) sounds.add(sound);
   }
   for (const notice of notices) {
-    if (notice.key === 'me-turn') add('turn_me');
-    if (notice.key === 'op-turn') add('turn_op');
+    const sound = NOTICE_SOUNDS[notice.key];
+    if (sound) sounds.add(sound);
   }
-  return out;
-}
+  return [...sounds];
+};

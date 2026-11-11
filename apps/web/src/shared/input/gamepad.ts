@@ -1,86 +1,36 @@
+import { STICK_DEADZONE, REPEAT_DELAY_MS, REPEAT_EVERY_MS } from '../constants/gamepad';
+import { PAD_BUTTONS, REPEATING_CONTROLS } from '../data/gamepad';
+import type { Box, Direction, PadControl, PadEvent, PadSnapshot } from '../interfaces/gamepad';
+
 /**
- * Controller reading (Gamepad API) without the DOM: turns the raw button state into
- * "pressed / released / repeated" events, so it can be tested without a real controller.
- * Uses the standard mapping (Xbox / PlayStation through the browser).
+ * Finds the controls pressed in a gamepad reading.
+ *
+ * @param pad - Buttons and axes of the gamepad.
+ * @returns The pressed controls.
  */
-
-export type PadControl =
-  | 'up'
-  | 'down'
-  | 'left'
-  | 'right'
-  | 'a'
-  | 'b'
-  | 'x'
-  | 'y'
-  | 'lb'
-  | 'rb'
-  | 'lt'
-  | 'rt'
-  | 'back'
-  | 'start';
-
-export interface PadSnapshot {
-  buttons: readonly boolean[];
-  axes: readonly number[];
-}
-
-export interface PadEvent {
-  control: PadControl;
-  type: 'press' | 'release' | 'repeat';
-}
-
-/** Indices of the Gamepad API "standard mapping". */
-const BUTTONS: Array<[index: number, control: PadControl]> = [
-  [0, 'a'],
-  [1, 'b'],
-  [2, 'x'],
-  [3, 'y'],
-  [4, 'lb'],
-  [5, 'rb'],
-  [6, 'lt'],
-  [7, 'rt'],
-  [8, 'back'],
-  [9, 'start'],
-  [12, 'up'],
-  [13, 'down'],
-  [14, 'left'],
-  [15, 'right'],
-];
-
-/** The stick must pass the halfway point to count as a direction. */
-const DEADZONE = 0.5;
-
-/** Controls pressed now (the left stick counts as a d-pad). */
-export function pressedControls(pad: PadSnapshot): Set<PadControl> {
+export const pressedControls = (pad: PadSnapshot): Set<PadControl> => {
   const pressed = new Set<PadControl>();
-  for (const [index, control] of BUTTONS) if (pad.buttons[index]) pressed.add(control);
-  const [x = 0, y = 0] = pad.axes;
-  if (Math.abs(x) > DEADZONE || Math.abs(y) > DEADZONE) {
-    // Only the dominant axis: a diagonal on the stick does not move in two directions
-    if (Math.abs(x) >= Math.abs(y)) pressed.add(x < 0 ? 'left' : 'right');
-    else pressed.add(y < 0 ? 'up' : 'down');
+  for (const [index, control] of PAD_BUTTONS) if (pad.buttons[index]) pressed.add(control);
+  const [horizontal = 0, vertical = 0] = pad.axes;
+  if (Math.abs(horizontal) > STICK_DEADZONE || Math.abs(vertical) > STICK_DEADZONE) {
+    if (Math.abs(horizontal) >= Math.abs(vertical)) pressed.add(horizontal < 0 ? 'left' : 'right');
+    else pressed.add(vertical < 0 ? 'up' : 'down');
   }
   return pressed;
-}
+};
 
-/** Holding a direction (or LB/RB) repeats, like a held key. */
-const REPEATS = new Set<PadControl>(['up', 'down', 'left', 'right', 'lb', 'rb']);
-export const REPEAT_DELAY_MS = 350;
-export const REPEAT_EVERY_MS = 120;
-
-/** Compares consecutive readings and produces the events. */
+/** Turns consecutive gamepad readings into press, repeat and release events. */
 export class PadTracker {
   private held = new Map<PadControl, number>();
 
   update(pressed: ReadonlySet<PadControl>, now: number): PadEvent[] {
     const events: PadEvent[] = [];
     for (const control of pressed) {
-      const next = this.held.get(control);
-      if (next === undefined) {
+      const repeatAt = this.held.get(control) ?? Infinity;
+      if (!this.held.has(control)) {
         events.push({ control, type: 'press' });
-        this.held.set(control, REPEATS.has(control) ? now + REPEAT_DELAY_MS : Infinity);
-      } else if (now >= next) {
+        this.held.set(control, REPEATING_CONTROLS.has(control) ? now + REPEAT_DELAY_MS : Infinity);
+      } else if (now >= repeatAt) {
         events.push({ control, type: 'repeat' });
         this.held.set(control, now + REPEAT_EVERY_MS);
       }
@@ -99,43 +49,46 @@ export class PadTracker {
   }
 }
 
-export type Direction = 'up' | 'down' | 'left' | 'right';
+const directionAxes = (direction: Direction, deltaX: number, deltaY: number): [number, number] => {
+  switch (direction) {
+    case 'left':
+      return [-deltaX, deltaY];
+    case 'right':
+      return [deltaX, deltaY];
+    case 'up':
+      return [-deltaY, deltaX];
+    case 'down':
+      return [deltaY, deltaX];
+  }
+};
 
-export interface Box {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+const centerOf = (box: Box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
+
+const directionScore = (from: Box, candidate: Box, direction: Direction): number | null => {
+  const start = centerOf(from);
+  const end = centerOf(candidate);
+  const [ahead, side] = directionAxes(direction, end.x - start.x, end.y - start.y);
+  if (ahead <= 1) return null;
+  return ahead + Math.abs(side) * 2;
+};
 
 /**
- * Spatial navigation: among the candidates, the closest one in the requested direction (the sideways
- * offset weighs more than the distance ahead). -1 when there is none in that direction.
+ * Finds the closest candidate in a direction.
+ *
+ * @param from - Box of the focused element.
+ * @param candidates - Boxes of the other elements.
+ * @param direction - Direction to move.
+ * @returns The candidate index, or -1.
  */
-export function nextInDirection(from: Box, candidates: readonly Box[], direction: Direction) {
-  const cx = from.x + from.width / 2;
-  const cy = from.y + from.height / 2;
+export const nextInDirection = (from: Box, candidates: readonly Box[], direction: Direction) => {
   let best = -1;
   let bestScore = Infinity;
-  candidates.forEach((box, i) => {
-    const bx = box.x + box.width / 2;
-    const by = box.y + box.height / 2;
-    const dx = bx - cx;
-    const dy = by - cy;
-    const [ahead, side] =
-      direction === 'left'
-        ? [-dx, dy]
-        : direction === 'right'
-          ? [dx, dy]
-          : direction === 'up'
-            ? [-dy, dx]
-            : [dy, dx];
-    if (ahead <= 1) return;
-    const score = ahead + Math.abs(side) * 2;
-    if (score < bestScore) {
+  for (const [index, box] of candidates.entries()) {
+    const score = directionScore(from, box, direction);
+    if (score !== null && score < bestScore) {
       bestScore = score;
-      best = i;
+      best = index;
     }
-  });
+  }
   return best;
-}
+};

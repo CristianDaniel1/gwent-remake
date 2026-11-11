@@ -17,7 +17,6 @@ test('player can go from the menu to a match through the deck builder and back',
   await expect(page).toHaveURL(/deck-builder/);
   await page.getByRole('button', { name: 'Iniciar jogo' }).click();
   await expect(page).toHaveURL(/\/game/);
-  // The initial redraw covers the board: finish it before leaving
   await page.getByRole('button', { name: 'Terminar troca' }).click();
   await page.getByRole('button', { name: 'Sair da partida' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Sair', exact: true }).click();
@@ -46,7 +45,6 @@ test('edited deck and faction persist after a reload', async ({ page }) => {
 });
 
 test('player can finish a full match against the hard bot', async ({ page }) => {
-  // The hard bot thinks in a Web Worker: this checks the worker loads and answers
   await page.addInitScript(() => {
     localStorage.setItem(
       'gwent:settings',
@@ -74,7 +72,6 @@ test('player can finish and replay a match with every mutator on', async ({ page
   await expect(page.getByRole('region', { name: '12 cartas na mão' })).toBeVisible();
 
   await playWholeMatch(page);
-  // The replay rebuilds the same match with the same rules
   await page.getByRole('button', { name: 'Assistir replay' }).click();
   await expect(
     page.getByRole('list', { name: 'Regras desta partida' }).getByRole('listitem'),

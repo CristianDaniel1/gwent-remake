@@ -10,69 +10,78 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiRequest, ApiRequestError } from '@/shared/api/http';
 import { useProfileStore } from '../store/profile.store';
+import { SERVER_QUERY_KEYS } from '../constants/query-keys';
+import { HealthSchema } from './schemas';
 
-/** Cache keys (in one place, to invalidate without misspelling a name). */
-export const serverKeys = {
-  health: ['server', 'health'] as const,
-  decks: (profileId: string) => ['server', 'decks', profileId] as const,
-  matches: (profileId: string) => ['server', 'matches', profileId] as const,
-  match: (id: string) => ['server', 'match', id] as const,
-};
-
-const HealthSchema = z.object({ status: z.literal('ok') });
-
-/** Is the server up? (the game works without it; this only enables the online features) */
-export function useServerStatus() {
+/**
+ * Checks whether the server is reachable.
+ *
+ * @returns Whether it is online and whether the check is still running.
+ */
+export const useServerStatus = () => {
   const query = useQuery({
-    queryKey: serverKeys.health,
+    queryKey: SERVER_QUERY_KEYS.health,
     queryFn: ({ signal }) => apiRequest('/health', { schema: HealthSchema, signal }),
     refetchInterval: 30_000,
   });
   return { online: query.isSuccess, checking: query.isPending };
-}
+};
 
-/** Server profile stored in this browser (null = not created yet). */
-export function useProfile() {
-  return useProfileStore((s) => s.profile);
-}
+/**
+ * Reads the server profile saved in this browser.
+ *
+ * @returns The profile, or null.
+ */
+export const useProfile = () => useProfileStore((store) => store.profile);
 
-export function useCreateProfile() {
-  const setProfile = useProfileStore((s) => s.setProfile);
+/**
+ * Creates a server profile and saves it in this browser.
+ *
+ * @returns The create mutation.
+ */
+export const useCreateProfile = () => {
+  const setProfile = useProfileStore((store) => store.setProfile);
   return useMutation({
     mutationFn: (name: string) =>
       apiRequest('/profiles', { method: 'POST', body: { name }, schema: ProfileSchema }),
     onSuccess: (profile) => setProfile({ id: profile.id, name: profile.name }),
   });
-}
+};
 
-/** Forgets the local profile when the server answers 404 (e.g. the database was wiped). */
-function forgetMissingProfile(error: unknown) {
-  if (error instanceof ApiRequestError && error.status === 404) {
-    useProfileStore.getState().setProfile(null);
+const forgettingMissingProfile = async <T>(request: Promise<T>): Promise<T> => {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404)
+      useProfileStore.getState().setProfile(null);
+    throw error;
   }
-}
+};
 
-export function useServerDecks() {
+/**
+ * Fetches the decks saved on the server.
+ *
+ * @returns The decks query.
+ */
+export const useServerDecks = () => {
   const profile = useProfile();
   const { online } = useServerStatus();
   return useQuery({
-    queryKey: serverKeys.decks(profile?.id ?? 'none'),
+    queryKey: SERVER_QUERY_KEYS.decks(profile?.id ?? 'none'),
     enabled: online && !!profile,
-    queryFn: async ({ signal }) => {
-      try {
-        return await apiRequest(`/profiles/${profile!.id}/decks`, {
-          schema: z.array(DeckRecordSchema),
-          signal,
-        });
-      } catch (error) {
-        forgetMissingProfile(error);
-        throw error;
-      }
-    },
+    queryFn: ({ signal }) =>
+      forgettingMissingProfile(
+        apiRequest(`/profiles/${profile!.id}/decks`, { schema: z.array(DeckRecordSchema), signal }),
+      ),
   });
-}
+};
 
-export function useSaveDeck() {
+/**
+ * Saves a deck on the server, updating it when an id is given.
+ *
+ * @returns The save mutation.
+ */
+export const useSaveDeck = () => {
   const client = useQueryClient();
   const profile = useProfile();
   return useMutation({
@@ -82,42 +91,52 @@ export function useSaveDeck() {
         body,
         schema: DeckRecordSchema,
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: serverKeys.decks(profile!.id) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SERVER_QUERY_KEYS.decks(profile!.id) }),
   });
-}
+};
 
-export function useDeleteDeck() {
+/**
+ * Deletes a deck saved on the server.
+ *
+ * @returns The delete mutation.
+ */
+export const useDeleteDeck = () => {
   const client = useQueryClient();
   const profile = useProfile();
   return useMutation({
     mutationFn: (deckId: string) =>
       apiRequest(`/profiles/${profile!.id}/decks/${deckId}`, { method: 'DELETE' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: serverKeys.decks(profile!.id) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SERVER_QUERY_KEYS.decks(profile!.id) }),
   });
-}
+};
 
-export function useMatchHistory() {
+/**
+ * Fetches the profile's match history.
+ *
+ * @returns The history query.
+ */
+export const useMatchHistory = () => {
   const profile = useProfile();
   const { online } = useServerStatus();
   return useQuery({
-    queryKey: serverKeys.matches(profile?.id ?? 'none'),
+    queryKey: SERVER_QUERY_KEYS.matches(profile?.id ?? 'none'),
     enabled: online && !!profile,
-    queryFn: async ({ signal }) => {
-      try {
-        return await apiRequest(`/profiles/${profile!.id}/matches`, {
+    queryFn: ({ signal }) =>
+      forgettingMissingProfile(
+        apiRequest(`/profiles/${profile!.id}/matches`, {
           schema: z.array(MatchSummarySchema),
           signal,
-        });
-      } catch (error) {
-        forgetMissingProfile(error);
-        throw error;
-      }
-    },
+        }),
+      ),
   });
-}
+};
 
-/** Sends the finished match; the server replays it to check the result. */
-export function useRecordMatch() {
+/**
+ * Sends a finished match to the server history.
+ *
+ * @returns The record mutation.
+ */
+export const useRecordMatch = () => {
   const client = useQueryClient();
   const profile = useProfile();
   return useMutation({
@@ -127,16 +146,20 @@ export function useRecordMatch() {
         body: match,
         schema: MatchSummarySchema,
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: serverKeys.matches(profile!.id) }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SERVER_QUERY_KEYS.matches(profile!.id) }),
   });
-}
+};
 
-/** A saved match with everything needed to replay it. Finished matches never change. */
-export function useMatchDetail(id: string | null) {
-  return useQuery({
-    queryKey: serverKeys.match(id ?? 'none'),
+/**
+ * Fetches a saved match with everything needed to replay it.
+ *
+ * @param id - Match id, or null to skip the request.
+ * @returns The match query.
+ */
+export const useMatchDetail = (id: string | null) =>
+  useQuery({
+    queryKey: SERVER_QUERY_KEYS.match(id ?? 'none'),
     enabled: !!id,
     staleTime: Infinity,
     queryFn: ({ signal }) => apiRequest(`/matches/${id}`, { schema: MatchDetailSchema, signal }),
   });
-}

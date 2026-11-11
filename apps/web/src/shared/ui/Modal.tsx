@@ -1,16 +1,14 @@
 import { m, useIsPresent } from 'motion/react';
 import { useId, type ReactNode } from 'react';
 
-type ModalProps = {
+interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
-};
+}
 
-/** Dialog over the stage, with a dimmed background. Use inside AnimatePresence to animate the exit. */
-export function Modal({ title, children, footer }: ModalProps) {
+export const Modal = ({ title, children, footer }: ModalProps) => {
   const titleId = useId();
-  // During the exit animation the dialog is still in the DOM: it must not receive clicks or focus.
   const isPresent = useIsPresent();
   return (
     <m.div
@@ -38,4 +36,4 @@ export function Modal({ title, children, footer }: ModalProps) {
       </div>
     </m.div>
   );
-}
+};

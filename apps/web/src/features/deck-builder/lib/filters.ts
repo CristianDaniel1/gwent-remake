@@ -1,18 +1,14 @@
 import type { CardDef } from '@gwent/engine';
+import type { CardFilter } from '../interfaces/filters';
 
-/** Collection filters. */
-export const CARD_FILTERS = [
-  'all',
-  'close',
-  'ranged',
-  'siege',
-  'hero',
-  'weather',
-  'special',
-] as const;
-export type CardFilter = (typeof CARD_FILTERS)[number];
-
-export function matchesFilter(def: CardDef, filter: CardFilter): boolean {
+/**
+ * Checks whether a card belongs to a collection filter.
+ *
+ * @param def - Card definition.
+ * @param filter - Selected filter.
+ * @returns True when the card matches the filter.
+ */
+export const matchesFilter = (def: CardDef, filter: CardFilter): boolean => {
   switch (filter) {
     case 'all':
       return true;
@@ -28,26 +24,4 @@ export function matchesFilter(def: CardDef, filter: CardFilter): boolean {
     case 'special':
       return def.type === 'special';
   }
-}
-
-/** Icon of each filter. */
-export const FILTER_ICONS: Record<CardFilter, string> = {
-  all: 'deck_stats_count',
-  close: 'card_row_close',
-  ranged: 'card_row_ranged',
-  siege: 'card_row_siege',
-  hero: 'deck_stats_hero',
-  weather: 'card_weather_frost',
-  special: 'deck_stats_special',
-};
-
-/** i18n (game namespace, deck section). */
-export const FILTER_LABELS: Record<CardFilter, string> = {
-  all: 'deck.filterAll',
-  close: 'deck.filterClose',
-  ranged: 'deck.filterRanged',
-  siege: 'deck.filterSiege',
-  hero: 'deck.filterHero',
-  weather: 'deck.filterWeather',
-  special: 'deck.filterSpecial',
 };

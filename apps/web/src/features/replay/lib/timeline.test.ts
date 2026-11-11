@@ -14,20 +14,19 @@ import { botSuggestion, buildTimeline, roundAt } from './timeline';
 
 const decks = { p1: PREMADE_DECKS[0] as DeckList, p2: PREMADE_DECKS[4] as DeckList };
 
-/** A full bot-vs-bot match, like one recorded by the game. */
-function recordedMatch(seed: number) {
+const recordedMatch = (seed: number) => {
   let { state } = createGame({ seed, decks });
-  const rng = randomFrom({ state: seed });
+  const random = randomFrom({ state: seed });
   const actions: GameAction[] = [];
   while (state.phase !== 'gameOver') {
-    const action = PLAYER_IDS.map((p) => chooseAiAction(state, p, rng)).find(Boolean)!;
+    const action = PLAYER_IDS.map((player) => chooseAiAction(state, player, random)).find(Boolean)!;
     const result = applyAction(state, action);
     if (!result.ok) throw new Error(result.error.code);
     state = result.state;
     actions.push(action);
   }
   return { seed, decks, actions, final: state };
-}
+};
 
 describe('buildTimeline', () => {
   it('rebuilds every state of the match and ends in the same final state', () => {
@@ -43,7 +42,9 @@ describe('buildTimeline', () => {
   it('marks where each round starts', () => {
     const timeline = buildTimeline(recordedMatch(3));
     expect(timeline.roundStarts.length).toBeGreaterThanOrEqual(2);
-    expect(timeline.roundStarts).toEqual([...timeline.roundStarts].sort((a, b) => a - b));
+    expect(timeline.roundStarts).toEqual(
+      [...timeline.roundStarts].sort((left, right) => left - right),
+    );
     expect(roundAt(timeline, 0)).toBe(0);
     expect(roundAt(timeline, timeline.roundStarts[1]!)).toBe(2);
   });
@@ -51,7 +52,7 @@ describe('buildTimeline', () => {
   it('stops at the first illegal action of a corrupted replay', () => {
     const match = recordedMatch(3);
     const actions = [...match.actions];
-    actions.splice(5, 0, { type: 'PASS', player: 'p1' }); // nobody can pass during the redraw
+    actions.splice(5, 0, { type: 'PASS', player: 'p1' });
     const timeline = buildTimeline({ ...match, actions });
     expect(timeline.brokenAt).toBe(5);
     expect(timeline.frames).toHaveLength(6);

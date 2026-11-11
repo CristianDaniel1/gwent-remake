@@ -1,14 +1,10 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 import { playWholeMatch } from './helpers';
 
-// Two people, two browsers, one match through the server (Socket.IO).
-// Skipped when the server is down.
-
 async function openLobby(browser: Browser, name: string): Promise<Page> {
   const context = await browser.newContext({
     locale: 'pt-BR',
     viewport: { width: 1600, height: 900 },
-    // A context made by hand does not get the config's "use" options
     reducedMotion: 'reduce',
   });
   const page = await context.newPage();
@@ -37,17 +33,14 @@ test.describe('multiplayer', () => {
 
     await expect(host).toHaveURL(/\/online\/game/);
     await expect(guest).toHaveURL(/\/online\/game/);
-    // Each one sees the other's name
     await expect(host.getByRole('region', { name: 'Ciri' })).toBeVisible();
     await expect(guest.getByRole('region', { name: 'Geralt' })).toBeVisible();
 
-    // Both play at the same time, each on their own turn
     await Promise.all([playWholeMatch(host), playWholeMatch(guest)]);
 
     await host.getByRole('button', { name: 'Revanche' }).click();
     await expect(guest.getByText('Geralt quer revanche!')).toBeVisible();
     await guest.getByRole('button', { name: 'Revanche' }).click();
-    // New match: back to the initial redraw
     await expect(host.getByRole('button', { name: 'Terminar troca' })).toBeVisible();
     await expect(guest.getByRole('button', { name: 'Terminar troca' })).toBeVisible();
   });
@@ -90,18 +83,15 @@ test.describe('multiplayer', () => {
     await guest.getByRole('button', { name: 'Entrar' }).click();
     await expect(host).toHaveURL(/\/online\/game/);
 
-    // The live list shows the match; watching needs no deck or name
     const watcher = await openLobby(browser, 'Vesemir');
     await watcher.getByRole('button', { name: 'Assistir Eskel × Lambert' }).click();
     await expect(watcher).toHaveURL(/\/online\/watch/);
     await expect(watcher.getByRole('region', { name: 'Eskel' })).toBeVisible();
     await expect(watcher.getByText('Ao vivo')).toBeVisible();
-    // Both hands stay face down for the spectator
     await expect(
       watcher.getByRole('region', { name: /cartas na mão/ }).getByRole('button'),
     ).toHaveCount(0);
 
-    // The players know someone is watching, and the spectator follows the moves
     await expect(host.getByText('1 assistindo')).toBeVisible();
     await host.getByRole('button', { name: 'Terminar troca' }).click();
     await guest.getByRole('button', { name: 'Terminar troca' }).click();

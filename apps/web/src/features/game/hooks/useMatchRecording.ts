@@ -1,24 +1,21 @@
 import { useEffect } from 'react';
 import { useProfile, useRecordMatch, useServerStatus } from '@/features/server';
-import type { BoardMatch, LocalMatch } from '../store/game.store';
+import type { BoardMatch } from '../interfaces/match';
+import type { LocalMatch } from '../interfaces/match';
+import type { RecordingStatus } from '../interfaces/recording';
 
-export type RecordingStatus = 'idle' | 'saving' | 'saved' | 'offline' | 'noProfile' | 'error';
-
-/**
- * Matches already sent. Lives outside the component: if the board is mounted again
- * after the match ends, the match is not saved twice.
- */
 const recorded = new WeakSet<LocalMatch['setup']>();
 
 /**
- * When the match ends, sends seed + decks + actions to the server history
- * (once per match). Without a server or a profile, the game goes on normally.
+ * Sends a finished match against the computer to the server history.
+ *
+ * @param match - Match on the board.
+ * @returns The sending status.
  */
-export function useMatchRecording(match: BoardMatch | null): RecordingStatus {
+export const useMatchRecording = (match: BoardMatch | null): RecordingStatus => {
   const { online } = useServerStatus();
   const profile = useProfile();
   const record = useRecordMatch();
-  // Only matches against the bot (online matches stay out of the history for now)
   const local = match?.mode === 'local' ? match : null;
   const finished = local?.state.phase === 'gameOver';
 
@@ -38,6 +35,5 @@ export function useMatchRecording(match: BoardMatch | null): RecordingStatus {
   if (!profile) return 'noProfile';
   if (record.isPending) return 'saving';
   if (record.isError) return 'error';
-  // Mounted again after saving: the new mutation is idle, but the match was already sent
   return record.isSuccess || (local && recorded.has(local.setup)) ? 'saved' : 'saving';
-}
+};

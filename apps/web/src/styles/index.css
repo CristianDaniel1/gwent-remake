@@ -12,11 +12,9 @@
   --color-ink-soft: #242424;
   --color-danger: #d4553f;
 
-  /* Fixed 16:9 board (1920x1080 base, scaled by useFitScreen) */
   --spacing-board-w: 1920px;
   --spacing-board-h: 1080px;
 
-  /* Active player's panel: slow golden pulse */
   --animate-turn-pulse: turn-pulse 1.8s ease-in-out infinite;
   @keyframes turn-pulse {
     0%,
@@ -28,7 +26,6 @@
     }
   }
 
-  /* Hero landing on the board: flames flickering around the edges */
   --animate-hero-flames: hero-flames 0.35s ease-in-out infinite alternate;
   @keyframes hero-flames {
     0% {
@@ -71,7 +68,6 @@
 }
 
 @layer components {
-  /* Where the selected card can go: a soft golden glow (brighter under the mouse/keyboard) */
   .play-target {
     border-radius: 0.2cqw;
     background: linear-gradient(180deg, rgba(255, 205, 110, 0.07), rgba(255, 190, 80, 0.13));
@@ -91,7 +87,6 @@
       0 0 0.8cqw rgba(255, 190, 80, 0.3);
   }
 
-  /* "Pass" button: a dark plate with a double golden frame */
   .pass-button {
     @apply rounded-[0.3cqw] text-[1.1cqw] font-bold tracking-[0.1em] whitespace-nowrap text-gold-light uppercase;
     border: 0.08cqw solid #b8924f;
@@ -128,7 +123,6 @@
     filter: grayscale(0.6);
   }
 
-  /* Score numbers on the coins: black with a white halo, as on the original board */
   .score-number {
     @apply leading-none font-bold text-black;
     text-shadow:
@@ -137,7 +131,6 @@
       0 0 0.45cqw rgba(255, 255, 255, 0.9);
   }
 
-  /* Card carousel arrows */
   .carousel-arrow {
     @apply absolute top-[44%] z-10 flex size-[4cqw] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-[0.12cqw] border-[goldenrod] bg-[rgba(10,10,10,0.55)] text-[goldenrod] shadow-[0_0_1cqw_rgba(0,0,0,0.6)] transition;
   }

@@ -13,13 +13,6 @@ export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const defaultNS = 'common';
 
-/**
- * Namespaces:
- * - common: interface texts
- * - cards: card names (key = CardDefId), abilities and factions.
- * - game: notifications and match labels.
- *   cards.json keys follow the CardDefId of packages/engine/src/data/cards.json: keep them in sync.
- */
 export const resources = {
   'pt-BR': { common: ptBRCommon, cards: ptBRCards, game: ptBRGame },
   en: { common: enCommon, cards: enCards, game: enGame },

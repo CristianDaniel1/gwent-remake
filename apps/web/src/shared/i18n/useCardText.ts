@@ -1,42 +1,48 @@
 import type { CardDef } from '@gwent/engine';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { SILENT_ABILITIES } from '../data/abilities';
+import type { AbilityText, CardText } from '../interfaces/card-text';
 
-export interface AbilityText {
-  name: string;
-  description: string;
-}
+const translated = (translate: TFunction<'cards'>, key: string): string | null => {
+  const value = translate(key as never) as unknown as string;
+  return value === key ? null : value;
+};
 
-export interface CardText {
-  name: string;
-  abilities: AbilityText[];
-}
+const abilityText = (translate: TFunction<'cards'>, id: string): AbilityText | null => {
+  if (SILENT_ABILITIES.has(id)) return null;
+  const description = translated(translate, `ability.${id}.description`);
+  if (!description) return null;
+  return { name: translated(translate, `ability.${id}.name`) ?? '', description };
+};
 
-/** Internal markers without their own text. */
-const SILENT = new Set(['vildkarrl', 'storm']);
+const abilityIds = (def: CardDef): string[] => {
+  const ids = [...def.abilities].reverse();
+  if (def.type === 'unit' && def.row === 'agile') ids.push('agile');
+  if (def.hero) ids.push('hero');
+  return ids;
+};
 
 /**
- * Translated name and descriptions of a card. The keys come from the catalog
- * (`cards:card.<id>`, `cards:ability.<id>`).
+ * Translates the name and abilities of a card.
+ *
+ * @param translate - Translation function of the cards namespace.
+ * @param def - Card definition.
+ * @returns The card name and abilities.
  */
-export function useCardText() {
-  const { t } = useTranslation('cards');
-  const text = (key: string) => t(key as never) as unknown as string;
-  const has = (key: string) => text(key) !== key;
+export const cardTextOf = (translate: TFunction<'cards'>, def: CardDef): CardText => ({
+  name: translated(translate, `card.${def.id}`) ?? `card.${def.id}`,
+  abilities: abilityIds(def)
+    .map((id) => abilityText(translate, id))
+    .filter((ability): ability is AbilityText => !!ability),
+});
 
-  return (def: CardDef): CardText => {
-    const ability = (id: string): AbilityText | null => {
-      if (SILENT.has(id) || !has(`ability.${id}.description`)) return null;
-      return {
-        name: has(`ability.${id}.name`) ? text(`ability.${id}.name`) : '',
-        description: text(`ability.${id}.description`),
-      };
-    };
-    const ids = [...def.abilities].reverse();
-    if (def.type === 'unit' && def.row === 'agile') ids.push('agile');
-    if (def.hero) ids.push('hero');
-    return {
-      name: text(`card.${def.id}`),
-      abilities: ids.map(ability).filter((a): a is AbilityText => a !== null),
-    };
-  };
-}
+/**
+ * Builds a function that translates a card's name and abilities.
+ *
+ * @returns The card translator.
+ */
+export const useCardText = () => {
+  const { t: translate } = useTranslation('cards');
+  return (def: CardDef): CardText => cardTextOf(translate, def);
+};

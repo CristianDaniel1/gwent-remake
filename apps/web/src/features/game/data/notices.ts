@@ -1,0 +1,20 @@
+/** Icon of each notice. */
+export const NOTICE_ICONS: Record<string, string> = {
+  'me-coin': 'notif_me_coin',
+  'op-coin': 'notif_op_coin',
+  'me-first': 'notif_me_coin',
+  'op-first': 'notif_op_coin',
+  'round-start': 'notif_round_start',
+  'me-turn': 'notif_me_turn',
+  'op-turn': 'notif_op_turn',
+  'me-pass': 'notif_round_passed',
+  'op-pass': 'notif_round_passed',
+  'win-round': 'notif_win_round',
+  'lose-round': 'notif_lose_round',
+  'draw-round': 'notif_draw_round',
+  north: 'notif_north',
+  monsters: 'notif_monsters',
+  scoiatael: 'notif_scoiatael',
+  'skellige-me': 'notif_skellige',
+  'skellige-op': 'notif_skellige',
+};

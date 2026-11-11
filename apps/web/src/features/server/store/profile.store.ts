@@ -1,16 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-
-export interface LocalProfile {
-  id: string;
-  name: string;
-}
-
-interface ProfileState {
-  /** Profile on the server (no login: the id is stored in the browser). */
-  profile: LocalProfile | null;
-  setProfile(profile: LocalProfile | null): void;
-}
+import type { LocalProfile, ProfileState } from '../interfaces/profile';
 
 const isProfile = (value: unknown): value is LocalProfile =>
   typeof value === 'object' &&
@@ -18,6 +8,7 @@ const isProfile = (value: unknown): value is LocalProfile =>
   typeof (value as LocalProfile).id === 'string' &&
   typeof (value as LocalProfile).name === 'string';
 
+/** Store of the server profile, persisted in the browser. */
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set) => ({

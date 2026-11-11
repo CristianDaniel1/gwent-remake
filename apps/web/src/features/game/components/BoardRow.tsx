@@ -1,39 +1,33 @@
 import type { CardInstanceId, CombatRow, GameState, PlayerId, RowScore } from '@gwent/engine';
-import { AnimatePresence, m } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { assets } from '@/shared/lib/assets';
-import { cn } from '@/shared/lib/cn';
 import { cardKey, targetKey } from '../hooks/useHumanControls';
-import type { WeatherKind } from '../lib/board';
-import { boxIn, coinRect, ROW_FRAME, ROW_PARTS, box, type Rect } from '../layout';
+import { type Targets } from '../interfaces/controls';
+import type { WeatherKind } from '../interfaces/board';
+import { boxIn, coinRect, box } from '../lib/layout';
+import { ROW_CARDS_WIDTH_CQW, ROW_FRAME } from '../data/layout';
+import { ROW_PARTS } from '../data/layout';
+import { type Rect } from '../interfaces/layout';
 import { BoardCard } from './BoardCard';
 import { CardStrip } from './CardStrip';
-import { HornRowAnimation } from './CardAnimations';
-import { useGameStore } from '../store/game.store';
+import { PlayTarget } from './PlayTarget';
+import { RowAbilityAnimation } from './animations/RowAbilityAnimation';
+import { WeatherOverlay } from './WeatherOverlay';
 
-const CARDS_WIDTH_CQW = ROW_PARTS.cards[2] / 19.2;
-
-type BoardRowProps = {
+interface BoardRowProps {
   state: GameState;
   side: PlayerId;
   row: CombatRow;
   rect: Rect;
-  /** Center of the row's score coin on the board artwork. */
   coin: readonly [number, number];
   score: RowScore;
   weather: WeatherKind | undefined;
-  /** Rows and special slots where the selected card can go ("p1:close"). */
-  rowTargets: ReadonlySet<string>;
-  specialTargets: ReadonlySet<string>;
-  /** Cards that can be targeted (Decoy). */
-  cardTargets: ReadonlySet<CardInstanceId>;
-  /** Target chosen with the keyboard (Enter confirms). */
+  targets: Targets;
   focusedKey: string | null;
   onPlayRow: (row: CombatRow) => void;
   onPlayCard: (id: CardInstanceId) => void;
-};
+}
 
-export function BoardRow({
+export const BoardRow = ({
   state,
   side,
   row,
@@ -41,23 +35,17 @@ export function BoardRow({
   coin,
   score,
   weather,
-  rowTargets,
-  specialTargets,
-  cardTargets,
+  targets,
   focusedKey,
   onPlayRow,
   onPlayCard,
-}: BoardRowProps) {
-  const { t } = useTranslation();
+}: BoardRowProps) => {
+  const { t: translate } = useTranslation();
   const special = state.players[side].rows[row].special;
-  const rowName = t(`match.choice.${row}`);
+  const rowName = translate(`match.choice.${row}`);
   const key = targetKey(side, row);
-  const rowTarget = rowTargets.has(key);
-  const specialTarget = specialTargets.has(key);
   const focused = focusedKey === key;
-  const hornSeq = useGameStore((s) =>
-    s.animations?.rows.some((r) => r.side === side && r.row === row) ? s.animations.seq : null,
-  );
+  const cardIds = score.cards.map((card) => card.id);
 
   return (
     <section style={box(rect)} aria-label={rowName} data-side={side} data-row={row}>
@@ -73,71 +61,40 @@ export function BoardRow({
         {special && (
           <BoardCard state={state} id={special} details={{ title: rowName, cardIds: [special] }} />
         )}
-        {specialTarget && (
-          <button
-            type="button"
-            data-target
-            aria-label={rowName}
-            onClick={() => onPlayRow(row)}
-            className={cn(
-              'play-target absolute inset-0 cursor-pointer',
-              focused && 'play-target-focused',
-            )}
-          />
+        {targets.specials.has(key) && (
+          <PlayTarget label={rowName} focused={focused} onClick={() => onPlayRow(row)} />
         )}
       </div>
 
       <div style={boxIn(ROW_FRAME, ROW_PARTS.cards)}>
         <CardStrip
           items={score.cards}
-          widthCqw={CARDS_WIDTH_CQW}
-          getKey={(c) => c.id}
-          renderItem={(c) => (
+          widthCqw={ROW_CARDS_WIDTH_CQW}
+          getKey={(card) => card.id}
+          renderItem={(card) => (
             <BoardCard
               state={state}
-              id={c.id}
-              power={c.power}
-              highlighted={cardTargets.has(c.id)}
-              details={{ title: rowName, cardIds: score.cards.map((x) => x.id) }}
-              focused={focusedKey === cardKey(c.id)}
-              {...(cardTargets.has(c.id) ? { onClick: () => onPlayCard(c.id) } : {})}
+              id={card.id}
+              power={card.power}
+              highlighted={targets.cards.has(card.id)}
+              details={{ title: rowName, cardIds }}
+              focused={focusedKey === cardKey(card.id)}
+              {...(targets.cards.has(card.id) ? { onClick: () => onPlayCard(card.id) } : {})}
             />
           )}
         />
-        {hornSeq !== null && <HornRowAnimation key={hornSeq} />}
-        {rowTarget && (
-          <button
-            type="button"
-            data-target
-            aria-label={rowName}
+        <RowAbilityAnimation side={side} row={row} />
+        {targets.rows.has(key) && (
+          <PlayTarget
+            label={rowName}
+            focused={focused}
             onClick={() => onPlayRow(row)}
-            className={cn(
-              'play-target absolute inset-0 z-30 cursor-pointer',
-              focused && 'play-target-focused',
-            )}
+            className="z-30"
           />
         )}
       </div>
 
-      <div
-        aria-hidden
-        style={boxIn(ROW_FRAME, ROW_PARTS.weather)}
-        className="pointer-events-none z-20"
-      >
-        <AnimatePresence>
-          {weather && (
-            <m.div
-              key={weather}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              style={{ backgroundImage: `url(${assets.icon(`overlay_${weather}`)})` }}
-              className="h-full w-full bg-cover bg-bottom bg-no-repeat"
-            />
-          )}
-        </AnimatePresence>
-      </div>
+      <WeatherOverlay weather={weather} />
     </section>
   );
-}
+};

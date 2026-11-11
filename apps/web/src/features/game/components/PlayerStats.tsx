@@ -1,29 +1,43 @@
 import type { PlayerState } from '@gwent/engine';
-import { AnimatePresence, m } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { assets } from '@/shared/lib/assets';
 import { cn } from '@/shared/lib/cn';
-import { box, boxIn, LAYOUT, STATS_PARTS } from '../layout';
+import { box, boxIn } from '../lib/layout';
+import { STATS_PARTS } from '../data/layout';
+import { LAYOUT } from '../data/layout';
+import { PassedLabel } from './player/PassedLabel';
+import { PlayerPortrait } from './player/PlayerPortrait';
+import { RoundTotal } from './player/RoundTotal';
+import { TurnGlow } from './player/TurnGlow';
 
-type PlayerStatsProps = {
+interface PlayerStatsProps {
   player: PlayerState;
   position: 'top' | 'bottom';
   name: string;
   total: number;
-  /** Is ahead in the round score. */
   leading: boolean;
-  /** It is this player's turn (the panel glows). */
   active: boolean;
-};
+}
 
-/** Player panel: portrait, name, faction, hand, gems, total and "passed". */
-export function PlayerStats({ player, position, name, total, leading, active }: PlayerStatsProps) {
-  const { t } = useTranslation();
-  const tCards = useTranslation('cards').t;
+const icon = (name: string) => ({ backgroundImage: `url(${assets.icon(name)})` });
+
+export const PlayerStats = ({
+  player,
+  position,
+  name,
+  total,
+  leading,
+  active,
+}: PlayerStatsProps) => {
+  const { t: translate } = useTranslation();
+  const { t: translateCards } = useTranslation('cards');
   const frame = LAYOUT.stats[position];
   const parts = STATS_PARTS[position];
-  const factionName = tCards(`faction.${player.faction}.name` as never) as unknown as string;
-  const image = (icon: string) => ({ backgroundImage: `url(${assets.icon(icon)})` });
+  const factionName = translateCards(
+    `faction.${player.faction}.name` as never,
+  ) as unknown as string;
+  const handLabel = translate('match.cardsInHand', { count: player.hand.length });
 
   return (
     <section
@@ -32,43 +46,12 @@ export function PlayerStats({ player, position, name, total, leading, active }: 
       aria-current={active ? 'true' : undefined}
       className="bg-[linear-gradient(90deg,rgba(15,12,10,0.8),rgba(20,18,16,0.6)_70%,rgba(20,18,16,0.35))]"
     >
-      {/* Turn indicator: golden edges and a warm light on the panel */}
-      <AnimatePresence>
-        {active && (
-          <m.div
-            key="turn"
-            aria-hidden
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="pointer-events-none absolute inset-0"
-          >
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,190,80,0.16),rgba(255,190,80,0.05)_75%,transparent)]" />
-            <div className="absolute inset-x-0 top-0 h-[0.12cqw] bg-[linear-gradient(90deg,#c8963c,#ffd864_40%,rgba(255,216,100,0.2))] shadow-[0_0_0.6cqw_#ffb43c]" />
-            <div className="absolute inset-x-0 bottom-0 h-[0.12cqw] bg-[linear-gradient(90deg,#c8963c,#ffd864_40%,rgba(255,216,100,0.2))] shadow-[0_0_0.6cqw_#ffb43c]" />
-          </m.div>
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{active && <TurnGlow key="turn" />}</AnimatePresence>
 
-      <div style={boxIn(frame, parts.ring)}>
-        <div
-          aria-hidden
-          className="absolute inset-[6%] rounded-full bg-[#2a2420] bg-cover bg-top bg-no-repeat"
-          style={image('profile')}
-        />
-        <div
-          aria-hidden
-          className={cn(
-            'absolute inset-0 bg-contain bg-center bg-no-repeat transition-[filter] duration-500',
-            active && 'drop-shadow-[0_0_0.5cqw_#ffc85a]',
-          )}
-          style={image('icon_player_border')}
-        />
-      </div>
+      <PlayerPortrait style={boxIn(frame, parts.ring)} active={active} />
       <div
         aria-hidden
-        style={{ ...boxIn(frame, parts.shield), ...image(`deck_shield_${player.faction}`) }}
+        style={{ ...boxIn(frame, parts.shield), ...icon(`deck_shield_${player.faction}`) }}
         className="bg-contain bg-center bg-no-repeat drop-shadow-[0_0_0.2cqw_black]"
       />
 
@@ -85,76 +68,36 @@ export function PlayerStats({ player, position, name, total, leading, active }: 
         {factionName}
       </div>
       <div
-        style={{ ...boxIn(frame, parts.handCount), ...image('icon_card_count') }}
+        style={{ ...boxIn(frame, parts.handCount), ...icon('icon_card_count') }}
         className="flex items-center bg-[length:auto_80%] bg-left bg-no-repeat pl-[2cqw] text-[1.6cqw] font-bold text-gold-light"
-        title={t('match.cardsInHand', { count: player.hand.length })}
+        title={handLabel}
       >
         <span aria-hidden>{player.hand.length}</span>
-        <span className="sr-only">{t('match.cardsInHand', { count: player.hand.length })}</span>
+        <span className="sr-only">{handLabel}</span>
       </div>
-      {parts.gems.map((gem, i) => (
+      {parts.gems.map((gem, index) => (
         <div
-          key={i}
+          key={index}
           aria-hidden
           style={{
             ...boxIn(frame, gem),
-            ...image(player.health > i ? 'icon_gem_on' : 'icon_gem_off'),
+            ...icon(player.health > index ? 'icon_gem_on' : 'icon_gem_off'),
           }}
           className="bg-contain bg-center bg-no-repeat"
         />
       ))}
 
-      {/* Round total: coin on the board edge, laurels when ahead */}
-      <div aria-hidden style={boxIn(frame, parts.laurel)} className="pointer-events-none z-[5]">
-        <AnimatePresence>
-          {leading && (
-            <m.div
-              key="laurel"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.7 }}
-              transition={{ duration: 0.35 }}
-              style={image('icon_high_score')}
-              className="h-full w-full bg-contain bg-center bg-no-repeat"
-            />
-          )}
-        </AnimatePresence>
-      </div>
-      <div
-        style={{
-          ...boxIn(frame, parts.total),
-          ...image(position === 'bottom' ? 'score_total_me' : 'score_total_op'),
-        }}
-        className="score-number z-10 flex items-center justify-center bg-contain bg-center bg-no-repeat text-[1.75cqw] drop-shadow-[0_0.1cqw_0.25cqw_rgba(0,0,0,0.7)]"
-      >
-        <span className="sr-only">{name}: </span>
-        <m.span
-          key={total}
-          initial={{ scale: 1.5 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-          className="inline-block"
-        >
-          {total}
-        </m.span>
-      </div>
-
+      <RoundTotal
+        total={total}
+        label={name}
+        leading={leading}
+        coin={position === 'bottom' ? 'score_total_me' : 'score_total_op'}
+        coinStyle={boxIn(frame, parts.total)}
+        laurelStyle={boxIn(frame, parts.laurel)}
+      />
       <AnimatePresence>
-        {player.passed && (
-          <m.div
-            key="passed"
-            initial={{ opacity: 0, x: '-0.6cqw' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0 }}
-            className={cn(
-              'absolute left-[26%] text-[1.5cqw] font-bold text-gold uppercase [text-shadow:0_0_0.4cqw_black]',
-              position === 'top' ? 'top-[102%]' : '-top-[28%]',
-            )}
-          >
-            {t('match.passed')}
-          </m.div>
-        )}
+        {player.passed && <PassedLabel key="passed" position={position} />}
       </AnimatePresence>
     </section>
   );
-}
+};

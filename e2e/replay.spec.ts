@@ -10,18 +10,15 @@ test('player can watch the replay of a finished match against the bot', async ({
   const step = page.getByText(/^Jogada \d+\/\d+$/);
   await expect(step).toHaveText(/^Jogada 0\//);
 
-  // Step forward by hand, then let it play for a moment
   await page.getByRole('button', { name: 'Próxima jogada' }).click();
   await expect(step).toHaveText(/^Jogada 1\//);
   await page.getByRole('button', { name: 'Reproduzir' }).click();
   await expect(step).toHaveText(/^Jogada [2-9]\//, { timeout: 10_000 });
   await page.getByRole('button', { name: 'Pausar' }).click();
 
-  // The end shows the same result as the match
   await page.getByRole('button', { name: 'Fim' }).click();
   await expect(page.getByText(/Vitória de|Empate/)).toBeVisible();
 
-  // Leaving a replay needs no confirmation
   await page.getByRole('button', { name: 'Sair do replay' }).click();
   await expect(page.getByRole('heading', { name: 'Gwent' })).toBeVisible();
 });

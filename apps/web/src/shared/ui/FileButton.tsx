@@ -1,14 +1,28 @@
-import { useRef } from 'react';
+import { useRef, type ChangeEvent } from 'react';
+import { reportError } from '@/shared/lib/report-error';
 
-type FileButtonProps = {
+interface FileButtonProps {
   label: string;
   onText: (text: string) => void;
+  onError?: () => void;
   className?: string;
-};
+}
 
-/** Button that opens the .json file picker and hands over the content as text. */
-export function FileButton({ label, onText, className }: FileButtonProps) {
+export const FileButton = ({ label, onText, onError, className }: FileButtonProps) => {
   const input = useRef<HTMLInputElement>(null);
+
+  const readFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      onText(await file.text());
+    } catch (error) {
+      reportError('file button: read file', error);
+      onError?.();
+    }
+  };
+
   return (
     <>
       <button type="button" className={className} onClick={() => input.current?.click()}>
@@ -20,12 +34,8 @@ export function FileButton({ label, onText, className }: FileButtonProps) {
         accept=".json,application/json"
         aria-label={label}
         className="hidden"
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          e.target.value = ''; // allows uploading the same file again
-          if (file) onText(await file.text());
-        }}
+        onChange={(event) => void readFile(event)}
       />
     </>
   );
-}
+};

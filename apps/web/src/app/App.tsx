@@ -4,12 +4,10 @@ import { RotateHint } from '@/shared/ui/RotateHint';
 import { Providers } from './providers';
 import { router } from './router';
 
-export function App() {
-  return (
-    <Providers>
-      <RouterProvider router={router} />
-      <MusicPlayer />
-      <RotateHint />
-    </Providers>
-  );
-}
+export const App = () => (
+  <Providers>
+    <RouterProvider router={router} />
+    <MusicPlayer />
+    <RotateHint />
+  </Providers>
+);

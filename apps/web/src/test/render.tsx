@@ -5,16 +5,13 @@ import { Providers } from '@/app/providers';
 import { createQueryClient } from '@/app/query-client';
 
 type RenderWithProvidersOptions = RenderOptions & {
-  /** Renders `ui` on a route (for pages that read URL params or navigation state). */
   route?: { path: string; entry: InitialEntry };
 };
 
-/** render() with the same providers as the app (+ an in-memory router). */
-export function renderWithProviders(
+export const renderWithProviders = (
   ui: ReactElement,
   { route, ...options }: RenderWithProvidersOptions = {},
-) {
-  // Fresh cache per test: nothing leaks from one test to another.
+) => {
   const queryClient = createQueryClient();
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <MemoryRouter {...(route ? { initialEntries: [route.entry] } : {})}>
@@ -30,4 +27,4 @@ export function renderWithProviders(
     </MemoryRouter>
   );
   return render(ui, { wrapper: Wrapper, ...options });
-}
+};

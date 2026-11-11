@@ -2,27 +2,26 @@ import type { GameState, PlayerId } from '@gwent/engine';
 import { useTranslation } from 'react-i18next';
 import { assets } from '@/shared/lib/assets';
 import { cn } from '@/shared/lib/cn';
-import { box, LAYOUT } from '../layout';
+import { box } from '../lib/layout';
+import { LAYOUT } from '../data/layout';
 import { useGameStore } from '../store/game.store';
 import { useUiStore } from '../store/ui.store';
 import { BoardCard } from './BoardCard';
 
-type LeaderSlotProps = {
+interface LeaderSlotProps {
   state: GameState;
   player: PlayerId;
   position: 'top' | 'bottom';
-  /** The human can activate the leader now (click selects; the preview shows the button). */
   selectable: boolean;
-};
+}
 
-export function LeaderSlot({ state, player, position, selectable }: LeaderSlotProps) {
-  const { t } = useTranslation();
+export const LeaderSlot = ({ state, player, position, selectable }: LeaderSlotProps) => {
+  const { t: translate } = useTranslation();
   const me = state.players[player];
-  const selected = useUiStore((s) => s.selected);
-  const toggleSelected = useUiStore((s) => s.toggleSelected);
+  const selected = useUiStore((store) => store.selected);
+  const toggleSelected = useUiStore((store) => store.toggleSelected);
   const available = me.leaderAvailable && !me.leaderDisabled;
-  // While the opponent's leader is shown enlarged, it leaves its slot (and flies back)
-  const away = useGameStore((s) => s.spotlight?.cardId === me.leader);
+  const away = useGameStore((store) => store.spotlight?.cardId === me.leader);
 
   return (
     <>
@@ -38,7 +37,7 @@ export function LeaderSlot({ state, player, position, selectable }: LeaderSlotPr
             state={state}
             id={me.leader}
             selected={selected === me.leader}
-            details={{ title: t('match.details'), cardIds: [me.leader] }}
+            details={{ title: translate('match.details'), cardIds: [me.leader] }}
             {...(selectable ? { onClick: () => toggleSelected(me.leader) } : {})}
           />
         )}
@@ -55,4 +54,4 @@ export function LeaderSlot({ state, player, position, selectable }: LeaderSlotPr
       )}
     </>
   );
-}
+};

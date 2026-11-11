@@ -5,14 +5,14 @@ import { deckToJson, parseDeckFile } from './deck-file';
 import { matchesFilter } from './filters';
 
 const empty: DeckList = { faction: 'realms', leader: 22, cards: [] };
-const DECOY = 1; // at most 3
+const DECOY = 1;
 const BALLISTA = 27;
 const NILFGAARD_UNIT = 61;
 
 describe('deck editing', () => {
   it('adds copies up to the card limit, keeping the id order', () => {
     let deck = addCopy(empty, BALLISTA);
-    for (let i = 0; i < 5; i++) deck = addCopy(deck, DECOY);
+    for (let index = 0; index < 5; index++) deck = addCopy(deck, DECOY);
     expect(deck.cards).toEqual([
       [DECOY, 3],
       [BALLISTA, 1],

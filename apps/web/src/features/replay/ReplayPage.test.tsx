@@ -13,17 +13,17 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderWithProviders } from '@/test/render';
-import { parseReplayFile } from './lib/replay-file';
+import { parseReplayFile } from '@/shared/lib/replay-file';
 import { ReplayPage } from './ReplayPage';
 
 const decks = { p1: PREMADE_DECKS[0] as DeckList, p2: PREMADE_DECKS[2] as DeckList };
 
-function replayFile(seed: number): ReplayFile {
+const replayFile = (seed: number): ReplayFile => {
   let { state } = createGame({ seed, decks });
-  const rng = randomFrom({ state: seed });
+  const random = randomFrom({ state: seed });
   const actions: GameAction[] = [];
   while (state.phase !== 'gameOver') {
-    const action = PLAYER_IDS.map((p) => chooseAiAction(state, p, rng)).find(Boolean)!;
+    const action = PLAYER_IDS.map((player) => chooseAiAction(state, player, random)).find(Boolean)!;
     const result = applyAction(state, action);
     if (!result.ok) throw new Error(result.error.code);
     state = result.state;
@@ -37,7 +37,7 @@ function replayFile(seed: number): ReplayFile {
     side: 'p1',
     names: { p1: 'Geralt', p2: '' },
   };
-}
+};
 
 const renderReplay = (state: unknown) =>
   renderWithProviders(<ReplayPage />, {
@@ -50,7 +50,6 @@ describe('ReplayPage', () => {
     renderReplay(replay);
     const total = replay.actions.length;
     expect(screen.getByText(`Jogada 0/${total}`)).toBeInTheDocument();
-    // Player names: the recorded one and the fallback for the bot
     expect(screen.getByRole('region', { name: 'Geralt' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Computador' })).toBeInTheDocument();
 
@@ -73,9 +72,15 @@ describe('ReplayPage', () => {
   it('swaps the side shown at the bottom', async () => {
     renderReplay(replayFile(8));
     const panels = () => screen.getAllByRole('region', { name: /Geralt|Computador/ });
-    expect(panels().map((p) => p.getAttribute('aria-label'))).toEqual(['Computador', 'Geralt']);
+    expect(panels().map((panel) => panel.getAttribute('aria-label'))).toEqual([
+      'Computador',
+      'Geralt',
+    ]);
     await userEvent.click(screen.getByRole('button', { name: 'Ver do lado de Computador' }));
-    expect(panels().map((p) => p.getAttribute('aria-label'))).toEqual(['Geralt', 'Computador']);
+    expect(panels().map((panel) => panel.getAttribute('aria-label'))).toEqual([
+      'Geralt',
+      'Computador',
+    ]);
   });
 
   it('explains when there is no replay to show', () => {
