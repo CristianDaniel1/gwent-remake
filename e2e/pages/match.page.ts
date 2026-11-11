@@ -122,12 +122,22 @@ export class MatchPage {
    * @throws Error - When the match does not end within MATCH_DEADLINE_MS (with the page snapshot).
    */
   async playWholeMatch() {
+    await this.playUntil(() => this.endScreen.isVisible());
+  }
+
+  /**
+   * Plays like playWholeMatch until a condition holds (e.g. the board has enough cards).
+   *
+   * @param isDone - Condition checked before each step.
+   * @throws Error - When the condition does not hold within MATCH_DEADLINE_MS (with the snapshot).
+   */
+  async playUntil(isDone: () => Promise<boolean>) {
     const deadline = Date.now() + MATCH_DEADLINE_MS;
-    while (!(await this.endScreen.isVisible())) {
+    while (!(await isDone())) {
       const remainingMs = deadline - Date.now();
       if (remainingMs <= 0) {
         const snapshot = await this.page.locator('body').ariaSnapshot();
-        throw new Error(`The match did not end in time:\n${snapshot}`);
+        throw new Error(`The match did not reach the expected state in time:\n${snapshot}`);
       }
       await this.waitForSomethingToDo(remainingMs);
       try {

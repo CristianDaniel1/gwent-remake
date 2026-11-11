@@ -1,39 +1,50 @@
-# Gwent
+# <img src="apps/web/public/favicon.svg" alt="" width="36" align="absmiddle" /> Gwent Remake
 
 Remake do Gwent do The Witcher 3 em React + TypeScript: partidas contra o computador (três níveis de
 dificuldade e regras extras), multiplayer com espectadores, replays e histórico.
 
-![Partida em andamento: Reinos do Norte contra Monstros, com Gelo Cortante nas fileiras de combate corpo a corpo](docs/images/board.jpg)
+![Partida em andamento contra o computador, com a carta Olgierd von Everec ampliada e a descrição das habilidades dela](docs/images/board.jpg)
 
 <table>
   <tr>
     <td width="33%"><img src="docs/images/card-details.jpg" alt="Carrossel de detalhes das cartas da mão" /></td>
     <td width="33%"><img src="docs/images/deck-builder.jpg" alt="Montador de baralho dos Reinos do Norte" /></td>
-    <td width="33%"><img src="docs/images/replay.jpg" alt="Replay com linha do tempo e a sugestão do bot" /></td>
+    <td width="33%"><img src="docs/images/replay.jpg" alt="Replay com linha do tempo, marcas das rodadas e a sugestão do bot" /></td>
   </tr>
   <tr>
     <td align="center">Detalhes das cartas</td>
     <td align="center">Montador de baralho</td>
     <td align="center">Replays</td>
   </tr>
+  <tr>
+    <td width="33%"><img src="docs/images/match-options.jpg" alt="Opções da partida: dificuldade do computador e mutadores" /></td>
+    <td width="33%"><img src="docs/images/spectator.jpg" alt="Espectador assistindo uma partida online ao vivo, sem ver a mão de nenhum jogador" /></td>
+    <td width="33%"></td>
+  </tr>
+  <tr>
+    <td align="center">Dificuldade e mutadores</td>
+    <td align="center">Espectador ao vivo</td>
+    <td></td>
+  </tr>
 </table>
 
-## Créditos
+## Recursos
 
-Baseado em **Gwent Classic**:
-[gwent-classic-multiplayer](https://github.com/Wanesia/gwent-classic-multiplayer), fork de
-[gwent-classic](https://github.com/asundr/gwent-classic) por Arun Sundaram.
-O código original serviu de base: as regras do jogo e o bot (nível Normal) partem da lógica dele, e
-os dados das cartas, os baralhos prontos e as traduções foram convertidos dele. Sobre essa base, o
-projeto foi reorganizado (TypeScript, regras separadas da interface, servidor próprio) e ganhou
-recursos novos: bot Fácil e Difícil, mutadores, replays, histórico conferido pelo servidor,
-multiplayer com servidor autoritativo e espectadores, controle e teclado, acessibilidade e testes
-automatizados. A ideia é continuar expandindo o jogo (veja o [roadmap](docs/roadmap.md)).
-Detalhes e licença em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Além do jogo original, o projeto tem:
 
-Artes, sons e música pertencem à **CD PROJEKT** e vêm do projeto original
-(`apps/web/public/assets/`). Estão aqui só para fins acadêmicos e não comerciais. Este projeto não
-tem relação com a CD PROJEKT.
+- **Contra o computador:** três níveis de dificuldade (Fácil, Normal e Difícil, que simula as
+  jogadas antes de decidir) e **mutadores**, regras extras como Mãos cheias e Clima persistente.
+- **Multiplayer online:** salas por código, partida rápida, reconexão ao recarregar a página e
+  **espectadores**. O servidor é a autoridade: valida cada jogada e só envia a cada jogador o que
+  ele pode ver.
+- **Replays:** linha do tempo com as rodadas, velocidade, troca de lado, a sugestão do bot para cada
+  jogada e exportação para arquivo.
+- **Histórico** de partidas no servidor, que reproduz cada partida para conferir o resultado.
+- **Teclado, controle de videogame e acessibilidade** (leitores de tela e navegação sem mouse).
+- **Três idiomas:** português, inglês e espanhol.
+- **Testes automatizados:** unitários, de API e e2e.
+
+A ideia é continuar expandindo o jogo: veja o [roadmap](docs/roadmap.md).
 
 ## Requisitos
 
@@ -129,7 +140,7 @@ apps/server       NestJS + Prisma 7 + PostgreSQL (Docker) + Socket.IO
 packages/engine   regras do jogo e bot (TypeScript puro, determinístico)
 packages/shared   schemas Zod compartilhados (baralho, API, socket)
 packages/config   tsconfig base
-e2e/              testes Playwright
+e2e/              testes Playwright (specs, page objects e fixtures)
 scripts/          preparação do servidor e leitura dos .env
 docs/             roadmap, testes, guia de mecânicas e decisões de arquitetura (ADRs)
 ```
@@ -147,3 +158,18 @@ docs/             roadmap, testes, guia de mecânicas e decisões de arquitetura
 Commits seguem [Conventional Commits](https://www.conventionalcommits.org/) (`feat: ...`,
 `fix: ...`), conferidos pelo commitlint. Antes de cada commit, ESLint e Prettier rodam nos arquivos
 alterados; antes de cada push, `pnpm typecheck && pnpm test`. Código, comentários e testes em inglês.
+
+## Créditos
+
+Baseado em **Gwent Classic**:
+[gwent-classic-multiplayer](https://github.com/Wanesia/gwent-classic-multiplayer), fork de
+[gwent-classic](https://github.com/asundr/gwent-classic) por Arun Sundaram.
+O código original serviu de base: as regras do jogo e o bot (nível Normal) partem da lógica dele, e
+os dados das cartas, os baralhos prontos e as traduções foram convertidos dele. Sobre essa base, o
+projeto foi reorganizado (TypeScript, regras separadas da interface, servidor próprio) e ganhou os
+[recursos](#recursos) listados acima. Detalhes e licença em
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Artes, sons e música pertencem à **CD PROJEKT** e vêm do projeto original
+(`apps/web/public/assets/`). Estão aqui só para fins acadêmicos e não comerciais. Este projeto não
+tem relação com a CD PROJEKT.
