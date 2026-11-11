@@ -1,6 +1,7 @@
 import type { CardInstanceId, GameAction } from '@gwent/engine';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { sfx } from '@/shared/audio/audio-manager';
+import { isDialogOpen } from '@/shared/lib/dialog';
 import { PASS_HOLD_MS } from '../constants/timings';
 import type { BoardMatch } from '../interfaces/match';
 import { useUiStore } from '../store/ui.store';
@@ -26,8 +27,6 @@ const normalizeKey = (event: KeyboardEvent) =>
 
 const isTyping = (event: KeyboardEvent) =>
   !!(event.target as HTMLElement | null)?.closest('input, select, textarea');
-
-const dialogOpen = () => !!document.querySelector('[role="dialog"]:not([aria-hidden="true"])');
 
 const focusedHandCard = (hand: readonly CardInstanceId[]) => {
   const { focusIndex } = ui();
@@ -143,7 +142,7 @@ export const useKeyboardControls = (input: KeyboardControlsInput) => {
         ui().setHelpOpen(!ui().helpOpen);
         return;
       }
-      if (dialogOpen()) return;
+      if (isDialogOpen()) return;
 
       if (PASS_KEYS.has(key)) {
         event.preventDefault();

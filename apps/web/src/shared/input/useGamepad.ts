@@ -3,6 +3,7 @@ import { nextInDirection, PadTracker, pressedControls } from './gamepad';
 import type { PadControl, PadEventType } from '../interfaces/gamepad';
 import { PAD_KEYS } from '../data/gamepad';
 import { FOCUSABLE_SELECTOR } from '../constants/gamepad';
+import { isInHiddenTree } from '../lib/dialog';
 
 let keyModeScreens = 0;
 /** Makes the gamepad send keyboard keys while the calling screen is mounted. */
@@ -19,14 +20,14 @@ const topDialog = (): HTMLElement | null => {
   const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"]');
   for (let index = dialogs.length - 1; index >= 0; index--) {
     const dialog = dialogs[index]!;
-    if (!dialog.closest('[aria-hidden="true"], [inert]')) return dialog;
+    if (!isInHiddenTree(dialog)) return dialog;
   }
   return null;
 };
 
 const focusables = (scope: ParentNode): HTMLElement[] =>
   [...scope.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter((element) => {
-    if (element.closest('[aria-hidden="true"], [inert]')) return false;
+    if (isInHiddenTree(element)) return false;
     const rect = element.getBoundingClientRect();
     return rect.width > 0 && rect.height > 0;
   });

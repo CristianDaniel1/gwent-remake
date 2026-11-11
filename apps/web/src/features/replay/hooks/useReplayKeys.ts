@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { isDialogOpen } from '@/shared/lib/dialog';
 
 interface ReplayKeyInput {
   frame: number;
@@ -9,8 +10,6 @@ interface ReplayKeyInput {
 
 const isTyping = (event: KeyboardEvent) =>
   !!(event.target as HTMLElement | null)?.closest?.('input, select, textarea, button');
-
-const dialogOpen = () => !!document.querySelector('[role="dialog"]:not([aria-hidden="true"])');
 
 /**
  * Handles the replay keyboard shortcuts.
@@ -25,7 +24,8 @@ export const useReplayKeys = (input: ReplayKeyInput) => {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event) || dialogOpen()) return;
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event) || isDialogOpen())
+        return;
       const { frame, last, toggle, seek } = latest.current;
       if (event.key === ' ' || event.key === 'Enter') toggle();
       else if (event.key === 'ArrowLeft') seek(frame - 1);
