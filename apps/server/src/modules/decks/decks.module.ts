@@ -4,6 +4,7 @@ import { DecksController } from './decks.controller';
 import { DecksRepository } from './decks.repository';
 import { DecksService } from './decks.service';
 
+/** Decks saved on the server for each profile. */
 @Module({
   imports: [ProfilesModule],
   controllers: [DecksController],

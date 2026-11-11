@@ -1,17 +1,21 @@
-/**
- * Token bucket per client: up to `burst` messages at once, refilling `perSecond` per second
- * (by default 25/s with bursts of 50).
- */
+import { RATE_LIMIT_BURST, RATE_LIMIT_PER_SECOND } from '../constants/realtime.constants';
+
+/** Token bucket per client: up to `burst` messages at once, refilling `perSecond` per second. */
 export class RateLimiter {
   private readonly buckets = new Map<string, { tokens: number; updatedAt: number }>();
 
   constructor(
-    private readonly perSecond = 25,
-    private readonly burst = 50,
+    private readonly perSecond = RATE_LIMIT_PER_SECOND,
+    private readonly burst = RATE_LIMIT_BURST,
     private readonly now: () => number = Date.now,
   ) {}
 
-  /** Takes a token; false = over the limit. */
+  /**
+   * Takes a token from the client's bucket.
+   *
+   * @param key - Client id.
+   * @returns False when the client is over the limit.
+   */
   take(key: string): boolean {
     const time = this.now();
     const bucket = this.buckets.get(key) ?? { tokens: this.burst, updatedAt: time };
@@ -26,6 +30,11 @@ export class RateLimiter {
     return allowed;
   }
 
+  /**
+   * Drops the bucket of a client that left.
+   *
+   * @param key - Client id.
+   */
   forget(key: string): void {
     this.buckets.delete(key);
   }

@@ -1,44 +1,32 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import {
-  applyAction,
-  createGame,
-  getMutator,
-  validateDeck,
-  type GameAction,
-  type GameState,
-  type PlayerId,
-  type RoundResult,
-} from '@gwent/engine';
-import type { CreateMatch, MatchResultKind } from '@gwent/shared';
+import { applyAction, createGame, getMutator, validateDeck, type GameAction } from '@gwent/engine';
+import type { CreateMatch } from '@gwent/shared';
+import { resultFor } from './helpers/match-result';
+import type { ReplayOutcome } from './interfaces/match.interfaces';
 
-/** Result of a finished match from one seat's point of view. */
-export function resultFor(state: GameState, side: PlayerId): MatchResultKind {
-  if (state.result === 'draw') return 'draw';
-  return state.result === side ? 'win' : 'loss';
-}
-
-export interface ReplayOutcome {
-  state: GameState;
-  /** From p1's point of view (use resultFor for p2). */
-  result: MatchResultKind;
-  rounds: RoundResult[];
-}
-
-/**
- * Replays a match with the engine (the same one the frontend uses). Ensures the decks are valid,
- * that every action was legal at the time and that the match finished. The result comes from here,
- * never from the client.
- */
+/** Replays matches with the engine, so results always come from the server, never the client. */
 @Injectable()
 export class MatchReplayer {
+  /**
+   * Replays a match, checking that the mutators exist, the decks are valid, every action was legal
+   * at the time and the match finished.
+   *
+   * @param match - Seed, decks, mutators and actions of the match.
+   * @returns The final state, the result for p1 and the round scores.
+   * @throws UnprocessableEntityException - When a mutator, deck or action is invalid, or the match
+   * did not finish.
+   */
   replay({ seed, decks, actions, mutators = [] }: CreateMatch): ReplayOutcome {
-    const unknown = mutators.filter((id) => !getMutator(id));
-    if (unknown.length > 0) {
-      throw new UnprocessableEntityException({ message: 'Unknown mutators', details: unknown });
+    const unknownMutators = mutators.filter((mutator) => !getMutator(mutator));
+    if (unknownMutators.length) {
+      throw new UnprocessableEntityException({
+        message: 'Unknown mutators',
+        details: unknownMutators,
+      });
     }
     for (const player of ['p1', 'p2'] as const) {
       const issues = validateDeck(decks[player]);
-      if (issues.length > 0) {
+      if (issues.length) {
         throw new UnprocessableEntityException({
           message: `Invalid deck for ${player}`,
           details: issues,
@@ -58,7 +46,7 @@ export class MatchReplayer {
       state = result.state;
     });
 
-    if (state.phase !== 'gameOver' || state.result === null) {
+    if (state.phase !== 'gameOver' || !state.result) {
       throw new UnprocessableEntityException('The match did not finish');
     }
     return { state, result: resultFor(state, 'p1'), rounds: state.roundHistory };

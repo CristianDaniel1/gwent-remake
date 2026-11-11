@@ -1,37 +1,11 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { validateDeck, type DeckIssue, type DeckList } from '@gwent/engine';
-import { DeckSchema, type DeckRecord } from '@gwent/shared';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { DeckRecord, SaveDeck } from '@gwent/shared';
 import { ProfilesService } from '../profiles/profiles.service';
-import { DecksRepository, type DeckData } from './decks.repository';
+import { DecksRepository } from './decks.repository';
+import { toDeckRecord } from './helpers/deck.mappers';
+import { assertStorableDeck } from './helpers/deck.validation';
 
-type DeckRow = {
-  id: string;
-  name: string;
-  faction: string;
-  leader: number;
-  cards: unknown;
-  updatedAt: Date;
-};
-
-/** Issues a saved deck may have (still under construction). Any other issue is never accepted. */
-const ALLOWED_WHILE_BUILDING: ReadonlySet<DeckIssue['code']> = new Set([
-  'NOT_ENOUGH_UNITS',
-  'TOO_MANY_SPECIALS',
-]);
-
-export function toDeckRecord(row: DeckRow): DeckRecord {
-  const deck = DeckSchema.parse({ faction: row.faction, leader: row.leader, cards: row.cards });
-  return { id: row.id, name: row.name, deck, updatedAt: row.updatedAt.toISOString() };
-}
-
-/** Rejects impossible decks (unknown card, another faction, too many copies…). */
-export function assertStorableDeck(deck: DeckList): void {
-  const issues = validateDeck(deck).filter((i) => !ALLOWED_WHILE_BUILDING.has(i.code));
-  if (issues.length > 0) {
-    throw new UnprocessableEntityException({ message: 'Invalid deck', details: issues });
-  }
-}
-
+/** Decks saved on the server for each profile. */
 @Injectable()
 export class DecksService {
   constructor(
@@ -39,31 +13,66 @@ export class DecksService {
     private readonly profiles: ProfilesService,
   ) {}
 
+  /**
+   * Lists the decks of a profile.
+   *
+   * @param profileId - Owner profile id.
+   * @returns The decks, most recently changed first.
+   * @throws NotFoundException - When the profile does not exist.
+   */
   async list(profileId: string): Promise<DeckRecord[]> {
-    await this.profiles.get(profileId);
-    return (await this.decks.listByProfile(profileId)).map(toDeckRecord);
+    await this.profiles.ensureExists(profileId);
+    const rows = await this.decks.listByProfile(profileId);
+    return rows.map(toDeckRecord);
   }
 
-  async create(profileId: string, data: DeckData): Promise<DeckRecord> {
-    await this.profiles.get(profileId);
-    assertStorableDeck(data.deck);
-    return toDeckRecord(await this.decks.create(profileId, data));
+  /**
+   * Saves a new deck.
+   *
+   * @param profileId - Owner profile id.
+   * @param deckInput - Deck name and card list.
+   * @returns The saved deck.
+   * @throws NotFoundException - When the profile does not exist.
+   * @throws UnprocessableEntityException - When the deck breaks the building rules.
+   */
+  async create(profileId: string, deckInput: SaveDeck): Promise<DeckRecord> {
+    await this.profiles.ensureExists(profileId);
+    assertStorableDeck(deckInput.deck);
+    const row = await this.decks.create(profileId, deckInput);
+    return toDeckRecord(row);
   }
 
-  async update(profileId: string, id: string, data: DeckData): Promise<DeckRecord> {
+  /**
+   * Replaces a deck of the profile.
+   *
+   * @param profileId - Owner profile id.
+   * @param id - Deck id.
+   * @param deckInput - New name and card list.
+   * @returns The saved deck.
+   * @throws NotFoundException - When the deck does not exist or belongs to another profile.
+   * @throws UnprocessableEntityException - When the deck breaks the building rules.
+   */
+  async update(profileId: string, id: string, deckInput: SaveDeck): Promise<DeckRecord> {
     await this.ensureOwned(profileId, id);
-    assertStorableDeck(data.deck);
-    return toDeckRecord(await this.decks.update(id, data));
+    assertStorableDeck(deckInput.deck);
+    const row = await this.decks.update(profileId, id, deckInput);
+    return toDeckRecord(row);
   }
 
+  /**
+   * Deletes a deck of the profile.
+   *
+   * @param profileId - Owner profile id.
+   * @param id - Deck id.
+   * @throws NotFoundException - When the deck does not exist or belongs to another profile.
+   */
   async remove(profileId: string, id: string): Promise<void> {
     await this.ensureOwned(profileId, id);
-    await this.decks.delete(id);
+    await this.decks.delete(profileId, id);
   }
 
-  private async ensureOwned(profileId: string, id: string) {
-    const row = await this.decks.findOwned(profileId, id);
-    if (!row) throw new NotFoundException('Deck not found');
-    return row;
+  private async ensureOwned(profileId: string, id: string): Promise<void> {
+    const deck = await this.decks.findOwned(profileId, id);
+    if (!deck) throw new NotFoundException('Deck not found');
   }
 }

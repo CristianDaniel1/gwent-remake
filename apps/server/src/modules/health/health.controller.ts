@@ -1,11 +1,17 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
+/** Tells whether the server and the database are up. */
 @Controller('health')
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Used by the frontend to know whether the server (and the database) are up. */
+  /**
+   * Checks the database connection.
+   *
+   * @returns The status of the server and the database.
+   * @throws ServiceUnavailableException - 503 when the database does not answer.
+   */
   @Get()
   async check() {
     try {

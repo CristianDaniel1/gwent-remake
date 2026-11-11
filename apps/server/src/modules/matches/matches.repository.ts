@@ -1,63 +1,51 @@
 import { Injectable } from '@nestjs/common';
-import type { PlayerId, RoundResult } from '@gwent/engine';
-import type { CreateMatch, MatchMode, MatchResultKind } from '@gwent/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MATCH_SUMMARY_SELECT } from './constants/matches.constants';
+import { toMatchColumns } from './helpers/match.mappers';
+import type { MatchHistoryEntry } from './interfaces/match.interfaces';
 
-export interface NewMatch extends CreateMatch {
-  mode: MatchMode;
-  /** Seat the profile played. */
-  side: PlayerId;
-  opponentName: string | null;
-  /** From the profile's point of view. */
-  result: MatchResultKind;
-  rounds: RoundResult[];
-}
-
-/** List columns (without the actions, which can be large). */
-const SUMMARY = {
-  id: true,
-  mode: true,
-  side: true,
-  faction: true,
-  opponent: true,
-  opponentName: true,
-  mutators: true,
-  result: true,
-  rounds: true,
-  createdAt: true,
-} as const;
-
+/** Database access for the match history. */
 @Injectable()
 export class MatchesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(profileId: string, match: NewMatch) {
-    const other: PlayerId = match.side === 'p1' ? 'p2' : 'p1';
-    return this.prisma.match.create({
-      data: {
-        profileId,
-        seed: BigInt(match.seed),
-        mode: match.mode,
-        side: match.side,
-        faction: match.decks[match.side].faction,
-        opponent: match.decks[other].faction,
-        opponentName: match.opponentName,
-        result: match.result,
-        rounds: match.rounds as object[],
-        decks: match.decks as object,
-        mutators: match.mutators ?? [],
-        actions: match.actions as object[],
-      },
-      select: SUMMARY,
-    });
+  /**
+   * Saves a match in one profile's history.
+   *
+   * @param entry - Profile and match to save.
+   * @returns The summary columns of the created row.
+   */
+  create(entry: MatchHistoryEntry) {
+    return this.prisma.match.create({ data: toMatchColumns(entry), select: MATCH_SUMMARY_SELECT });
   }
 
+  /**
+   * Saves several history entries in one transaction: all of them or none.
+   *
+   * @param entries - Profiles and matches to save.
+   * @returns The summary columns of the created rows.
+   */
+  createMany(entries: MatchHistoryEntry[]) {
+    return this.prisma.$transaction(
+      entries.map((entry) =>
+        this.prisma.match.create({ data: toMatchColumns(entry), select: MATCH_SUMMARY_SELECT }),
+      ),
+    );
+  }
+
+  /**
+   * Lists the latest matches of a profile, newest first.
+   *
+   * @param profileId - Profile id.
+   * @param take - Maximum number of matches.
+   * @returns The summary rows.
+   */
   listByProfile(profileId: string, take: number) {
     return this.prisma.match.findMany({
       where: { profileId },
       orderBy: { createdAt: 'desc' },
       take,
-      select: SUMMARY,
+      select: MATCH_SUMMARY_SELECT,
     });
   }
 

@@ -5,11 +5,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PREMADE_DECKS } from '@gwent/engine';
 import { PrismaClient } from '../src/generated/prisma/client';
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL as string }),
-});
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is not set');
 
-async function main() {
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+
+/** Creates the Demo profile with the premade decks, unless it already exists. */
+const main = async () => {
   const existing = await prisma.profile.findFirst({ where: { name: 'Demo' } });
   if (existing) {
     console.log(`Demo profile already exists (${existing.id}).`);
@@ -19,8 +21,8 @@ async function main() {
     data: {
       name: 'Demo',
       decks: {
-        create: PREMADE_DECKS.map((deck, i) => ({
-          name: `Pronto ${i + 1}`,
+        create: PREMADE_DECKS.map((deck, index) => ({
+          name: `Pronto ${index + 1}`,
           faction: deck.faction,
           leader: deck.leader,
           cards: deck.cards.map(([id, count]) => [id, count]),
@@ -29,6 +31,11 @@ async function main() {
     },
   });
   console.log(`Demo profile created (${profile.id}) with ${PREMADE_DECKS.length} decks.`);
-}
+};
 
-main().finally(() => prisma.$disconnect());
+main()
+  .catch((error: unknown) => {
+    console.error('Seed failed:', error);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

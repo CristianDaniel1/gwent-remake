@@ -11,6 +11,7 @@ import { ProfilesModule } from './modules/profiles/profiles.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { PrismaModule } from './prisma/prisma.module';
 
+/** Root module: configuration, database, feature modules, global validation and error format. */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
@@ -22,7 +23,6 @@ import { PrismaModule } from './prisma/prisma.module';
   ],
   controllers: [HealthController],
   providers: [
-    // Validation of every DTO (Zod schemas from @gwent/shared) and a single error format.
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],

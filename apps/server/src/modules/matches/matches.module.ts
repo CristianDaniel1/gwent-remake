@@ -5,11 +5,11 @@ import { MatchesController } from './matches.controller';
 import { MatchesRepository } from './matches.repository';
 import { MatchesService } from './matches.service';
 
+/** Match history; exports the service so the multiplayer rooms can save finished matches. */
 @Module({
   imports: [ProfilesModule],
   controllers: [MatchesController],
   providers: [MatchesService, MatchesRepository, MatchReplayer],
-  // The multiplayer rooms save finished matches through MatchesService (MatchRecorder).
   exports: [MatchesService],
 })
 export class MatchesModule {}

@@ -3,10 +3,10 @@ import { ProfilesController } from './profiles.controller';
 import { ProfilesRepository } from './profiles.repository';
 import { ProfilesService } from './profiles.service';
 
+/** Profiles; exports the service so decks and matches can check that a profile exists. */
 @Module({
   controllers: [ProfilesController],
   providers: [ProfilesService, ProfilesRepository],
-  // Decks and matches need to check whether the profile exists.
   exports: [ProfilesService],
 })
 export class ProfilesModule {}

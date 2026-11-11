@@ -116,7 +116,7 @@ describe('HistoryPage', () => {
     apiServer.use(
       http.get('*/api/profiles/:id/matches', () =>
         HttpResponse.json(
-          { statusCode: 404, error: 'NotFoundException', message: 'Profile not found' },
+          { statusCode: 404, error: 'NOT_FOUND', message: 'Profile not found' },
           { status: 404 },
         ),
       ),

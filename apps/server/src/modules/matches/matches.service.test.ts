@@ -1,53 +1,52 @@
+import { Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import {
-  applyAction,
-  chooseAiAction,
-  createGame,
-  PLAYER_IDS,
-  PREMADE_DECKS,
-  randomFrom,
-  type DeckList,
-  type GameAction,
-} from '@gwent/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { OTHER_PROFILE_ID, PROFILE_ID, TEST_DECKS } from '../../../test/constants/test.constants';
+import { playBotMatch } from '../../../test/helpers/bot-match';
 import { ProfilesService } from '../profiles/profiles.service';
+import type { OnlineMatchRecord } from './interfaces/match-recorder.interface';
 import { MatchReplayer } from './match-replayer';
 import { MatchesRepository } from './matches.repository';
 import { MatchesService } from './matches.service';
 
-const HOST = '11111111-1111-4111-8111-111111111111';
-const GUEST = '22222222-2222-4222-8222-222222222222';
-const decks = { p1: PREMADE_DECKS[0] as DeckList, p2: PREMADE_DECKS[3] as DeckList };
-
-/** Full bot-vs-bot match: seed, decks and actions, like a finished online room. */
-function finishedMatch(seed: number) {
-  let { state } = createGame({ seed, decks });
-  const rng = randomFrom({ state: seed });
-  const actions: GameAction[] = [];
-  while (state.phase !== 'gameOver') {
-    const action = PLAYER_IDS.map((p) => chooseAiAction(state, p, rng)).find(Boolean);
-    if (!action) throw new Error('nobody acts');
-    const result = applyAction(state, action);
-    if (!result.ok) throw new Error(result.error.code);
-    state = result.state;
-    actions.push(action);
-  }
-  return { seed, actions, winner: state.result };
-}
+/**
+ * Builds a finished online match between Geralt (p1) and Ciri (p2).
+ *
+ * @param seed - Match seed.
+ * @param profileIds - Profile id of each player, when they have one.
+ * @returns The match as the multiplayer rooms report it.
+ */
+const onlineMatch = (
+  seed: number,
+  profileIds: { p1?: string; p2?: string } = {},
+): OnlineMatchRecord => {
+  const { actions } = playBotMatch(seed);
+  return {
+    seed,
+    decks: TEST_DECKS,
+    actions,
+    players: {
+      p1: { name: 'Geralt', profileId: profileIds.p1 },
+      p2: { name: 'Ciri', profileId: profileIds.p2 },
+    },
+  };
+};
 
 describe('MatchesService.recordOnline', () => {
   let service: MatchesService;
-  const repo = { create: vi.fn() };
-  const profiles = { exists: vi.fn() };
+  const repository = { createMany: vi.fn<MatchesRepository['createMany']>() };
+  const profiles = { exists: vi.fn<ProfilesService['exists']>() };
 
   beforeEach(async () => {
+    vi.restoreAllMocks();
     vi.resetAllMocks();
-    repo.create.mockResolvedValue({});
+    repository.createMany.mockResolvedValue([]);
+    profiles.exists.mockResolvedValue(true);
     const moduleRef = await Test.createTestingModule({
       providers: [
         MatchesService,
         MatchReplayer,
-        { provide: MatchesRepository, useValue: repo },
+        { provide: MatchesRepository, useValue: repository },
         { provide: ProfilesService, useValue: profiles },
       ],
     }).compile();
@@ -55,50 +54,47 @@ describe('MatchesService.recordOnline', () => {
   });
 
   it("saves one entry per player with a profile, each from that player's point of view", async () => {
-    profiles.exists.mockResolvedValue(true);
-    const match = finishedMatch(5);
-    await service.recordOnline({
-      ...match,
-      decks,
-      players: { p1: { name: 'Geralt', profileId: HOST }, p2: { name: 'Ciri', profileId: GUEST } },
-    });
+    await service.recordOnline(onlineMatch(5, { p1: PROFILE_ID, p2: OTHER_PROFILE_ID }));
 
-    expect(repo.create).toHaveBeenCalledTimes(2);
-    const [host, guest] = repo.create.mock.calls.map(([profileId, row]) => ({ profileId, row }));
+    expect(repository.createMany).toHaveBeenCalledTimes(1);
+    const [host, guest] = repository.createMany.mock.calls[0]?.[0] ?? [];
     expect(host).toMatchObject({
-      profileId: HOST,
-      row: { mode: 'online', side: 'p1', opponentName: 'Ciri' },
+      profileId: PROFILE_ID,
+      match: { mode: 'online', side: 'p1', opponentName: 'Ciri' },
     });
     expect(guest).toMatchObject({
-      profileId: GUEST,
-      row: { mode: 'online', side: 'p2', opponentName: 'Geralt' },
+      profileId: OTHER_PROFILE_ID,
+      match: { mode: 'online', side: 'p2', opponentName: 'Geralt' },
     });
-    if (match.winner !== 'draw') {
-      // Opposite results for the two seats
-      expect(new Set([host?.row.result, guest?.row.result])).toEqual(new Set(['win', 'loss']));
-    }
+  });
+
+  it('gives the two seats opposite results when someone wins', async () => {
+    expect(playBotMatch(5).winner).not.toBe('draw');
+    await service.recordOnline(onlineMatch(5, { p1: PROFILE_ID, p2: OTHER_PROFILE_ID }));
+    const entries = repository.createMany.mock.calls[0]?.[0] ?? [];
+    const results = new Set(entries.map((entry) => entry.match.result));
+    expect(results).toEqual(new Set(['win', 'loss']));
   });
 
   it('skips players without a profile or with a profile that no longer exists', async () => {
     profiles.exists.mockResolvedValue(false);
-    await service.recordOnline({
-      ...finishedMatch(6),
-      decks,
-      players: { p1: { name: 'Geralt', profileId: HOST }, p2: { name: 'Ciri' } },
-    });
-    expect(repo.create).not.toHaveBeenCalled();
+    await service.recordOnline(onlineMatch(6, { p1: PROFILE_ID }));
+    expect(repository.createMany).not.toHaveBeenCalled();
   });
 
-  it('does not throw when the match cannot be replayed', async () => {
-    profiles.exists.mockResolvedValue(true);
-    await expect(
-      service.recordOnline({
-        seed: 1,
-        decks,
-        actions: [{ type: 'PASS', player: 'p1' }],
-        players: { p1: { name: 'Geralt', profileId: HOST }, p2: { name: 'Ciri' } },
-      }),
-    ).resolves.toBeUndefined();
-    expect(repo.create).not.toHaveBeenCalled();
+  it('logs instead of throwing when the match cannot be replayed', async () => {
+    const logError = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const forged = { ...onlineMatch(6, { p1: PROFILE_ID }), actions: [] };
+    await expect(service.recordOnline(forged)).resolves.toBeUndefined();
+    expect(repository.createMany).not.toHaveBeenCalled();
+    expect(logError).toHaveBeenCalledOnce();
+  });
+
+  it('logs instead of throwing when the database fails', async () => {
+    const logError = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    repository.createMany.mockRejectedValue(new Error('connection lost'));
+    const recording = service.recordOnline(onlineMatch(7, { p1: PROFILE_ID }));
+    await expect(recording).resolves.toBeUndefined();
+    expect(logError).toHaveBeenCalledOnce();
   });
 });

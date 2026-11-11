@@ -1,27 +1,45 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
-import { CreateProfileSchema } from '@gwent/shared';
-import { createZodDto } from 'nestjs-zod';
+import { CreateProfileDto } from './dto/create-profile.dto';
 import { ProfilesService } from './profiles.service';
 
-/** DTO generated from the schema shared with the frontend (same validation on both sides). */
-class CreateProfileDto extends createZodDto(CreateProfileSchema) {}
-
+/** Local player profiles: create, read and rename. */
 @Controller('profiles')
 export class ProfilesController {
   constructor(private readonly profiles: ProfilesService) {}
 
+  /**
+   * Creates a profile.
+   *
+   * @param body - Player name.
+   * @returns The new profile.
+   */
   @Post()
-  create(@Body() body: CreateProfileDto) {
+  createProfile(@Body() body: CreateProfileDto) {
     return this.profiles.create(body.name);
   }
 
+  /**
+   * Reads a profile.
+   *
+   * @param id - Profile id.
+   * @returns The profile.
+   * @throws NotFoundException - 404 when the profile does not exist.
+   */
   @Get(':id')
-  get(@Param('id', ParseUUIDPipe) id: string) {
+  getProfile(@Param('id', ParseUUIDPipe) id: string) {
     return this.profiles.get(id);
   }
 
+  /**
+   * Renames a profile.
+   *
+   * @param id - Profile id.
+   * @param body - New player name.
+   * @returns The updated profile.
+   * @throws NotFoundException - 404 when the profile does not exist.
+   */
   @Patch(':id')
-  rename(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateProfileDto) {
+  renameProfile(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateProfileDto) {
     return this.profiles.rename(id, body.name);
   }
 }

@@ -10,11 +10,9 @@ export interface OnlineMatchRecord {
 }
 
 /**
- * Saves finished online matches to the players' history. The multiplayer rooms only know
- * this interface, so they can be tested without a database.
+ * Saves finished online matches to the players' history. The multiplayer rooms only know this
+ * interface, so they can be tested without a database.
  */
 export interface MatchRecorder {
   recordOnline(match: OnlineMatchRecord): Promise<void>;
 }
-
-export const MATCH_RECORDER = Symbol('MATCH_RECORDER');

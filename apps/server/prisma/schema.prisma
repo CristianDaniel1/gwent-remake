@@ -34,35 +34,53 @@ model Deck {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([profileId])
+  @@index([profileId, updatedAt])
 }
 
 /// Finished match. Seed + decks + actions are enough to reproduce everything (replay):
 /// the server checks the result by running the engine itself.
 model Match {
-  id           String   @id @default(uuid()) @db.Uuid
-  profileId    String   @db.Uuid
-  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id           String      @id @default(uuid()) @db.Uuid
+  profileId    String      @db.Uuid
+  profile      Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
   /// The seed is a uint32: it does not fit in a Postgres Int (int4).
   seed         BigInt
-  /// "bot" | "online"
-  mode         String   @default("bot") @db.VarChar(10)
-  /// Seat the profile played ("p1" | "p2"); against the bot it is always p1
-  side         String   @default("p1") @db.VarChar(2)
+  mode         MatchMode   @default(bot)
+  /// Seat the profile played; against the bot it is always p1
+  side         PlayerSide  @default(p1)
   /// Factions (to list matches without opening the decks): the profile's and the opponent's
-  faction      String   @db.VarChar(20)
-  opponent     String   @db.VarChar(20)
+  faction      String      @db.VarChar(20)
+  opponent     String      @db.VarChar(20)
   /// Online opponent name (null against the bot)
-  opponentName String?  @db.VarChar(40)
-  /// "win" | "loss" | "draw" from the player's point of view
-  result       String   @db.VarChar(10)
+  opponentName String?     @db.VarChar(40)
+  /// From the profile's point of view
+  result       MatchResult
   /// Score of each round: [{ round, winner, scores }]
   rounds       Json
   decks        Json
   /// Extra match rules (engine mutator ids)
-  mutators     Json     @default("[]")
+  mutators     Json        @default("[]")
   actions      Json
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
 
   @@index([profileId, createdAt])
+}
+
+/// Who the opponent was.
+enum MatchMode {
+  bot
+  online
+}
+
+/// Seat at the table.
+enum PlayerSide {
+  p1
+  p2
+}
+
+/// Match result from the profile's point of view.
+enum MatchResult {
+  win
+  loss
+  draw
 }

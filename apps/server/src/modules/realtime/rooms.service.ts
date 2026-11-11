@@ -13,66 +13,18 @@ import {
   type GameState,
   type PlayerId,
 } from '@gwent/engine';
-import {
-  ROOM_CODE_ALPHABET,
-  ROOM_CODE_LENGTH,
-  type EnterRoom,
-  type GameUpdate,
-  type JoinedRoom,
-  type LiveRoom,
-  type RealtimeErrorCode,
-  type RoomClosedReason,
-  type RoomStatus,
-  type RoomView,
-  type SpectatorUpdate,
-} from '@gwent/shared';
-import { MATCH_RECORDER, type MatchRecorder } from '../matches/match-recorder';
-import { REALTIME_OPTIONS, type RealtimeOptions } from './realtime.options';
-import { timeoutAction, waitingFor } from './turns';
-
-/** How the service talks to the players (implemented by the Socket.IO gateway). */
-export interface RoomNotifier {
-  joined(socketId: string, joined: JoinedRoom): void;
-  roomUpdate(socketId: string, room: RoomView): void;
-  gameUpdate(socketId: string, update: GameUpdate): void;
-  spectatorUpdate(socketId: string, update: SpectatorUpdate): void;
-  roomClosed(socketId: string, reason: RoomClosedReason): void;
-}
-
-export class RealtimeError extends Error {
-  constructor(readonly code: RealtimeErrorCode) {
-    super(code);
-  }
-}
-
-interface Seat {
-  token: string;
-  name: string;
-  deck: DeckList;
-  /** Server profile: the finished match goes to its history. */
-  profileId?: string | undefined;
-  /** null = disconnected (waiting to reconnect). */
-  socketId: string | null;
-  wantsRematch: boolean;
-  graceTimer?: NodeJS.Timeout;
-}
-
-interface Room {
-  code: string;
-  seats: Record<PlayerId, Seat | null>;
-  status: RoomStatus;
-  state: GameState | null;
-  /** Seed and actions of the current match: enough to replay it. */
-  seed: number;
-  actions: GameAction[];
-  /** Sockets watching the match (they see no hand). */
-  spectators: Set<string>;
-  turnTimer?: NodeJS.Timeout;
-}
-
-interface Queued extends EnterRoom {
-  socketId: string;
-}
+import type { EnterRoom, JoinedRoom, LiveRoom, RoomClosedReason, RoomView } from '@gwent/shared';
+import { describeError } from '../../common/helpers/describe-error';
+import { MATCH_RECORDER } from '../matches/constants/matches.constants';
+import type { MatchRecorder } from '../matches/interfaces/match-recorder.interface';
+import { MAX_MATCH_SEED, REALTIME_OPTIONS } from './constants/realtime.constants';
+import { RealtimeError } from './errors/realtime.error';
+import { randomRoomCode } from './helpers/room-code';
+import { toRoomView } from './helpers/room-view';
+import { timeoutAction, waitingFor } from './helpers/turns';
+import type { RealtimeOptions } from './interfaces/realtime-options.interface';
+import type { RoomNotifier } from './interfaces/room-notifier.interface';
+import type { QueuedPlayer, Room, SeatLocation } from './interfaces/room.interfaces';
 
 /**
  * Multiplayer rooms, in memory. The server is the authority: it keeps the full state,
@@ -83,12 +35,12 @@ export class RoomsService implements OnModuleDestroy {
   private readonly logger = new Logger(RoomsService.name);
   private readonly rooms = new Map<string, Room>();
   /** token → seat (to reconnect) */
-  private readonly seatsByToken = new Map<string, { code: string; player: PlayerId }>();
+  private readonly seatsByToken = new Map<string, SeatLocation>();
   /** socket → token (to find the room of whoever sent the message) */
   private readonly tokensBySocket = new Map<string, string>();
   /** spectator socket → room code */
   private readonly watching = new Map<string, string>();
-  private queue: Queued[] = [];
+  private queue: QueuedPlayer[] = [];
   private notifier: RoomNotifier | null = null;
 
   constructor(
@@ -96,16 +48,28 @@ export class RoomsService implements OnModuleDestroy {
     @Optional() @Inject(MATCH_RECORDER) private readonly recorder: MatchRecorder | null = null,
   ) {}
 
+  /**
+   * Sets how the service talks to the players.
+   *
+   * @param notifier - Sender of the messages (the gateway).
+   */
   setNotifier(notifier: RoomNotifier) {
     this.notifier = notifier;
   }
 
+  /** Clears every room timer when the application stops. */
   onModuleDestroy() {
     for (const room of this.rooms.values()) this.clearTimers(room);
   }
 
-  // --- Joining --------------------------------------------------------------
-
+  /**
+   * Creates a room and seats the player as p1.
+   *
+   * @param socketId - Player socket.
+   * @param request - Player name, deck and optional profile id.
+   * @returns The session token and the room.
+   * @throws RealtimeError - ALREADY_IN_ROOM or INVALID_DECK.
+   */
   create(socketId: string, request: EnterRoom): JoinedRoom {
     this.assertFree(socketId);
     this.assertPlayable(request.deck);
@@ -122,6 +86,14 @@ export class RoomsService implements OnModuleDestroy {
     return this.seat(room, 'p1', socketId, request);
   }
 
+  /**
+   * Seats the player as p2 and starts the match.
+   *
+   * @param socketId - Player socket.
+   * @param request - Room code, player name, deck and optional profile id.
+   * @returns The session token and the room.
+   * @throws RealtimeError - ALREADY_IN_ROOM, INVALID_DECK, ROOM_NOT_FOUND or ROOM_FULL.
+   */
   join(socketId: string, request: EnterRoom & { code: string }): JoinedRoom {
     this.assertFree(socketId);
     this.assertPlayable(request.deck);
@@ -133,7 +105,14 @@ export class RoomsService implements OnModuleDestroy {
     return joined;
   }
 
-  /** Quick match: the first player waits; the second is paired with them. */
+  /**
+   * Quick match: the first player waits; the second is paired with them in a new room.
+   *
+   * @param socketId - Player socket.
+   * @param request - Player name, deck and optional profile id.
+   * @returns 0 when the player waits, 1 when they were paired.
+   * @throws RealtimeError - ALREADY_IN_ROOM or INVALID_DECK.
+   */
   enqueue(socketId: string, request: EnterRoom): { waiting: number } {
     this.assertFree(socketId);
     this.assertPlayable(request.deck);
@@ -150,11 +129,23 @@ export class RoomsService implements OnModuleDestroy {
     return { waiting: 1 };
   }
 
+  /**
+   * Removes the player from the quick match queue.
+   *
+   * @param socketId - Player socket.
+   */
   dequeue(socketId: string) {
-    this.queue = this.queue.filter((q) => q.socketId !== socketId);
+    this.queue = this.queue.filter((queued) => queued.socketId !== socketId);
   }
 
-  /** Reconnects with the token (dropped connection or reloaded page). */
+  /**
+   * Gives the seat back to a player who reconnected (dropped connection or reloaded page).
+   *
+   * @param socketId - New player socket.
+   * @param token - Session token received when the player took the seat.
+   * @returns The session token and the room.
+   * @throws RealtimeError - SESSION_NOT_FOUND when the token or the room no longer exists.
+   */
   resume(socketId: string, token: string): JoinedRoom {
     const place = this.seatsByToken.get(token);
     const room = place && this.rooms.get(place.code);
@@ -167,12 +158,17 @@ export class RoomsService implements OnModuleDestroy {
     this.tokensBySocket.set(socketId, token);
     this.broadcastRoom(room);
     if (room.state) this.sendGame(room, place.player, []);
-    return { token, room: this.view(room, place.player) };
+    return { token, room: toRoomView(room, place.player) };
   }
 
-  // --- Watching -------------------------------------------------------------
-
-  /** Watches a room as a spectator: receives the match without any hand. */
+  /**
+   * Watches a room as a spectator: receives the match without any hand.
+   *
+   * @param socketId - Spectator socket.
+   * @param code - Room code.
+   * @returns The room as a spectator sees it.
+   * @throws RealtimeError - ALREADY_IN_ROOM or ROOM_NOT_FOUND.
+   */
   watch(socketId: string, code: string): { room: RoomView } {
     this.assertFree(socketId);
     const room = this.rooms.get(code);
@@ -182,10 +178,14 @@ export class RoomsService implements OnModuleDestroy {
     this.watching.set(socketId, code);
     this.broadcastRoom(room);
     if (room.state) this.sendSpectator(socketId, room.state, []);
-    return { room: this.view(room, null) };
+    return { room: toRoomView(room, null) };
   }
 
-  /** Matches being played now (both seats taken), for the lobby list. */
+  /**
+   * Lists the matches being played now (both seats taken), for the lobby.
+   *
+   * @returns The live rooms.
+   */
   liveRooms(): LiveRoom[] {
     return [...this.rooms.values()].flatMap((room) => {
       const { p1, p2 } = room.seats;
@@ -201,25 +201,39 @@ export class RoomsService implements OnModuleDestroy {
     });
   }
 
-  // --- Playing --------------------------------------------------------------
-
+  /**
+   * Plays an action of the player in their match.
+   *
+   * @param socketId - Player socket.
+   * @param action - Engine action.
+   * @throws RealtimeError - NOT_IN_ROOM, or ILLEGAL_ACTION when the engine rejects the action.
+   */
   act(socketId: string, action: GameAction): void {
     const { room, player } = this.locate(socketId);
     if (!room.state || action.player !== player) throw new RealtimeError('ILLEGAL_ACTION');
     this.apply(room, action);
   }
 
+  /**
+   * Records that the player wants a rematch; starts it when both players want one.
+   *
+   * @param socketId - Player socket.
+   * @throws RealtimeError - NOT_IN_ROOM.
+   */
   rematch(socketId: string): void {
     const { room, player } = this.locate(socketId);
     const seat = room.seats[player];
     if (room.status !== 'finished' || !seat) return;
     seat.wantsRematch = true;
-    if (PLAYER_IDS.every((p) => room.seats[p]?.wantsRematch)) this.startGame(room);
+    if (PLAYER_IDS.every((playerId) => room.seats[playerId]?.wantsRematch)) this.startGame(room);
     else this.broadcastRoom(room);
   }
 
-  // --- Leaving --------------------------------------------------------------
-
+  /**
+   * Leaves the queue, stops watching or closes the player's room for the opponent.
+   *
+   * @param socketId - Player or spectator socket.
+   */
   leave(socketId: string): void {
     this.dequeue(socketId);
     if (this.stopWatching(socketId)) return;
@@ -230,7 +244,11 @@ export class RoomsService implements OnModuleDestroy {
     if (room) this.close(room, 'opponentLeft');
   }
 
-  /** Dropped connection: waits a while for the reconnection before closing the room. */
+  /**
+   * Handles a dropped connection: waits a while for the reconnection before closing the room.
+   *
+   * @param socketId - Socket that disconnected.
+   */
   disconnect(socketId: string): void {
     this.dequeue(socketId);
     if (this.stopWatching(socketId)) return;
@@ -244,12 +262,15 @@ export class RoomsService implements OnModuleDestroy {
     this.logger.log(`Room ${room.code}: ${seat.name} disconnected; waiting for reconnection`);
     this.broadcastRoom(room);
     seat.graceTimer = setTimeout(
-      () => this.close(room, 'opponentTimedOut'),
+      () => this.runSafely(room, () => this.close(room, 'opponentTimedOut')),
       this.options.disconnectGraceMs,
     );
   }
 
-  // --- Internals ------------------------------------------------------------
+  /** Rooms open right now (for tests and logs). */
+  get openRooms(): number {
+    return this.rooms.size;
+  }
 
   private seat(room: Room, player: PlayerId, socketId: string, request: EnterRoom): JoinedRoom {
     const token = randomUUID();
@@ -264,14 +285,14 @@ export class RoomsService implements OnModuleDestroy {
     this.seatsByToken.set(token, { code: room.code, player });
     this.tokensBySocket.set(socketId, token);
     this.broadcastRoom(room);
-    return { token, room: this.view(room, player) };
+    return { token, room: toRoomView(room, player) };
   }
 
   private startGame(room: Room) {
     const { p1, p2 } = room.seats;
     if (!p1 || !p2) return;
     p1.wantsRematch = p2.wantsRematch = false;
-    const seed = randomInt(2 ** 32 - 1);
+    const seed = randomInt(MAX_MATCH_SEED);
     const { state, events } = createGame({ seed, decks: { p1: p1.deck, p2: p2.deck } });
     room.state = state;
     room.seed = seed;
@@ -308,13 +329,33 @@ export class RoomsService implements OnModuleDestroy {
   /** Whoever takes too long gets the automatic move (redraw, choice or pass). */
   private scheduleTurnTimer(room: Room) {
     clearTimeout(room.turnTimer);
-    if (!room.state || waitingFor(room.state).length === 0) return;
-    room.turnTimer = setTimeout(() => {
-      for (const player of waitingFor(room.state as GameState)) {
-        const action = room.state && timeoutAction(room.state, player);
-        if (action) this.apply(room, action);
-      }
-    }, this.options.turnTimeoutMs);
+    if (!room.state || !waitingFor(room.state).length) return;
+    room.turnTimer = setTimeout(
+      () => this.runSafely(room, () => this.playTimeoutActions(room)),
+      this.options.turnTimeoutMs,
+    );
+  }
+
+  private playTimeoutActions(room: Room) {
+    if (!room.state) return;
+    for (const player of waitingFor(room.state)) {
+      const action = room.state && timeoutAction(room.state, player);
+      if (action) this.apply(room, action);
+    }
+  }
+
+  /**
+   * Runs timer work, logging any error: an exception thrown inside a timer would stop the process.
+   *
+   * @param room - Room the work belongs to.
+   * @param task - Work to run.
+   */
+  private runSafely(room: Room, task: () => void) {
+    try {
+      task();
+    } catch (error) {
+      this.logger.error(`Room ${room.code}: timer failed`, describeError(error));
+    }
   }
 
   /** Sends the finished match to the players' history (in the background). */
@@ -391,27 +432,11 @@ export class RoomsService implements OnModuleDestroy {
   private broadcastRoom(room: Room) {
     for (const player of PLAYER_IDS) {
       const socketId = room.seats[player]?.socketId;
-      if (socketId) this.notifier?.roomUpdate(socketId, this.view(room, player));
+      if (socketId) this.notifier?.roomUpdate(socketId, toRoomView(room, player));
     }
     for (const socketId of room.spectators) {
-      this.notifier?.roomUpdate(socketId, this.view(room, null));
+      this.notifier?.roomUpdate(socketId, toRoomView(room, null));
     }
-  }
-
-  private view(room: Room, you: PlayerId | null): RoomView {
-    const seatView = (seat: Seat | null) =>
-      seat && {
-        name: seat.name,
-        connected: seat.socketId !== null,
-        wantsRematch: seat.wantsRematch,
-      };
-    return {
-      code: room.code,
-      you,
-      status: room.status,
-      seats: { p1: seatView(room.seats.p1), p2: seatView(room.seats.p2) },
-      spectators: room.spectators.size,
-    };
   }
 
   private locate(socketId: string): { room: Room; player: PlayerId } {
@@ -422,28 +447,20 @@ export class RoomsService implements OnModuleDestroy {
     return { room, player: place.player };
   }
 
+  /** Fails when the socket already has a seat; a spectator who decides to play stops watching. */
   private assertFree(socketId: string) {
     if (this.tokensBySocket.has(socketId)) throw new RealtimeError('ALREADY_IN_ROOM');
-    // A spectator who decides to play stops watching first
     this.stopWatching(socketId);
   }
 
   private assertPlayable(deck: DeckList) {
-    if (validateDeck(deck).length > 0) throw new RealtimeError('INVALID_DECK');
+    if (validateDeck(deck).length) throw new RealtimeError('INVALID_DECK');
   }
 
+  /** Draws room codes until one is not in use. */
   private newCode(): string {
-    for (;;) {
-      const code = Array.from(
-        { length: ROOM_CODE_LENGTH },
-        () => ROOM_CODE_ALPHABET[randomInt(ROOM_CODE_ALPHABET.length)],
-      ).join('');
-      if (!this.rooms.has(code)) return code;
-    }
-  }
-
-  /** For tests and logs: rooms open right now. */
-  get openRooms(): number {
-    return this.rooms.size;
+    let code = randomRoomCode();
+    while (this.rooms.has(code)) code = randomRoomCode();
+    return code;
   }
 }

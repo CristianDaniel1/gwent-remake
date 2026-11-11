@@ -139,6 +139,7 @@ export type ReplayFile = z.infer<typeof ReplayFileSchema>;
 /** Single API error format (AllExceptionsFilter). */
 export const ApiErrorSchema = z.object({
   statusCode: z.number().int(),
+  /** Stable error code in UPPER_SNAKE_CASE (NOT_FOUND, VALIDATION_ERROR, CONFLICT…). */
   error: z.string(),
   message: z.string(),
   details: z.unknown().optional(),

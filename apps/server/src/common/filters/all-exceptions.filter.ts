@@ -1,55 +1,32 @@
 import {
   Catch,
-  HttpException,
   HttpStatus,
   Logger,
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
-import type { ApiError } from '@gwent/shared';
-import type { Response } from 'express';
-import { ZodValidationException } from 'nestjs-zod';
+import type { Request, Response } from 'express';
+import { toApiError } from '../helpers/api-error';
+import { describeError } from '../helpers/describe-error';
 
-/** Every error response has the same format (ApiError from @gwent/shared). */
+/** Answers every HTTP error with the same format (ApiError from @gwent/shared) and logs the 5xx. */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
+  /**
+   * Sends the error response for an exception thrown during a request.
+   *
+   * @param exception - Value thrown while handling the request.
+   * @param host - Current request context.
+   */
   catch(exception: unknown, host: ArgumentsHost) {
-    const response = host.switchToHttp().getResponse<Response>();
-    const body = this.toApiError(exception);
-    if (body.statusCode >= 500) this.logger.error(exception);
-    response.status(body.statusCode).json(body);
-  }
-
-  private toApiError(exception: unknown): ApiError {
-    if (exception instanceof ZodValidationException) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        error: 'ValidationError',
-        message: 'Invalid data',
-        details: exception.getZodError(),
-      };
+    const http = host.switchToHttp();
+    const body = toApiError(exception);
+    if (body.statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      const request = http.getRequest<Request>();
+      this.logger.error(`${request.method} ${request.url} failed`, describeError(exception));
     }
-    if (exception instanceof HttpException) {
-      const status = exception.getStatus();
-      const res = exception.getResponse();
-      const message =
-        typeof res === 'string'
-          ? res
-          : String((res as { message?: unknown }).message ?? exception.message);
-      const details = typeof res === 'object' ? (res as { details?: unknown }).details : undefined;
-      return {
-        statusCode: status,
-        error: exception.name,
-        message,
-        ...(details !== undefined ? { details } : {}),
-      };
-    }
-    return {
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      error: 'InternalServerError',
-      message: 'Internal error',
-    };
+    http.getResponse<Response>().status(body.statusCode).json(body);
   }
 }
